@@ -320,6 +320,7 @@ commands: dict[str, Callable[..., return_value]] = {
     "clear": _clear,
     "exec": _exec,
     "set": _set,
+    "exit": lambda *args: return_value(try_again=False, exit=True),
 }
 alias: dict[str, str] = {}
 GLOBALS: dict[str, int] = {"chances": 10}
