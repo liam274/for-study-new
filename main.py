@@ -166,11 +166,11 @@ def study(*args: str) -> return_value:
         print(title)
         time += 1
         print(f"{time}.", i)
-        answer: str = input(">> ")
         trying: int = GLOBALS["chances"]
         ans: str
         while questions[i].content:
             ans = questions[i].content.pop()
+            answer: str = input(">> ")
             while answer != ans:
                 if answer == MAGIC_STRING:
                     print("Magic string detected, exiting...")
@@ -388,6 +388,7 @@ def executor() -> None:
                 input(ANSI(prompt), key_bindings=bindings).split()
             )
             command: str = pre_command[0]
+            command = alias.get(command, command)
             arguments: tuple[str, ...] = pre_command
             value: return_value = commands.get(command, unknown)(*arguments)
             if value.exit:
