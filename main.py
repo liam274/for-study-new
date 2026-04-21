@@ -308,6 +308,8 @@ def ls(*args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     for [_, dirs, files] in os.walk(os.getcwd()):
         for dir in dirs:
+            if dir.startswith("."):
+                continue
             print(dir + "/")
         for file in files:
             if file.startswith("."):
