@@ -200,6 +200,9 @@ def cd(*args: str) -> return_value:
     if len(args) < 2:
         print("No path provided")
         return result
+    if not os.path.isdir(args[1]):
+        print(f"{args[1]} is not a directory")
+        return result
     os.chdir(args[1])
     working_dir = shrinkuser(os.getcwd())
     prompt = (
@@ -212,6 +215,9 @@ def nano(*args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
         print("No path provided")
+        return result
+    if os.path.isdir(args[1]):
+        print(f"{args[1]} is a directory")
         return result
     clear()
     print(args)
@@ -323,6 +329,12 @@ def cat(*args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
         print("No path provided")
+        return result
+    if os.path.isdir(args[1]):
+        print(f"{args[1]} is a directory")
+        return result
+    if not os.path.isfile(args[1]):
+        print(f"{args[1]} does not exist")
         return result
     with open(args[1], "r") as file:
         print(file.read())
