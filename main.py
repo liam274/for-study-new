@@ -24,6 +24,7 @@ from ubelt import shrinkuser  # type: ignore
 
 SPECIAL_CHARS: str = "~:"
 MAGIC_STRING: str = "35c4p3d"
+trues: set[str] = {"y", "yes", "true"}
 
 
 @dataclass
@@ -361,6 +362,23 @@ def restart(*args: str) -> return_value:
     return result
 
 
+def rm(*args: str) -> return_value:
+    result = return_value(try_again=False, exit=False)
+    if len(args) < 2:
+        print("No path provided")
+        return result
+    if os.path.isdir(args[1]):
+        print(f"{args[1]} is a directory")
+        return result
+    if not os.path.isfile(args[1]):
+        print(f"{args[1]} does not exist")
+        return result
+    answer = input(f'Are you sure you want to delete file "{args[1]}"? (y/n) ')
+    if answer.lower() in trues:
+        os.remove(args[1])
+    return result
+
+
 commands: dict[str, Callable[..., return_value]] = {
     "study": study,
     "cd": cd,
@@ -379,6 +397,7 @@ commands: dict[str, Callable[..., return_value]] = {
     "whoami": whoami,
     "echo": echo,
     "refresh": restart,
+    "rm": rm,
 }
 alias: dict[str, str] = {}
 GLOBALS: dict[str, int] = {"chances": 10}
