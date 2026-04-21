@@ -269,7 +269,7 @@ def mv(*args: str) -> return_value:
 
 def _help(*args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
-    if len(args):
+    if len(args) > 1:
         if args[1] in commands:
             print(f"{args[1]}: {commands[args[1]].__doc__}")
         else:
@@ -277,13 +277,34 @@ def _help(*args: str) -> return_value:
         return result
     print("Available commands:")
     for i in commands:
-        print(i)
+        print("" * 17, i)
     return result
 
 
 def _clear(*args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     clear()
+    return result
+
+
+def _exec(*args: str) -> return_value:
+    result = return_value(try_again=False, exit=False)
+    if len(args) < 2:
+        print("No command provided")
+        return result
+    print(eval(" ".join(args[1:])))
+    return result
+
+
+def _set(*args: str) -> return_value:
+    result = return_value(try_again=False, exit=False)
+    if len(args) < 3:
+        print("Not enough arguments provided")
+        return result
+    if args[1] not in DEFAULTS:
+        GLOBALS[args[1]] = int(args[2])
+    else:
+        GLOBALS[args[1]] = default(args[2], DEFAULTS[args[1]])
     return result
 
 
@@ -297,15 +318,15 @@ commands: dict[str, Callable[..., return_value]] = {
     "mkdir": mkdir,
     "help": _help,
     "clear": _clear,
+    "exec": _exec,
+    "set": _set,
 }
 alias: dict[str, str] = {}
-GLOBALS: dict[str, int] = {}
+GLOBALS: dict[str, int] = {"chances": 10}
+DEFAULTS: dict[str, int] = {"chances": 10}
 
 
 def executor() -> None:
-    _: str = input("How many chances would you like to have? ")
-    chances: int = default(_, 10)
-    GLOBALS.update({"chances": chances})
     while 1:
         try:
             pre_command: tuple[str, ...] = tuple(input("$ ").split())
