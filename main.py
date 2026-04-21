@@ -47,10 +47,8 @@ def _(event: Any):
 
 class parser:
     def __init__(self: parser, path: str):
-        self.path = path
         with open(path, "r") as file:
-            self.iter = (i for i in file.readlines())
-        self.exec()
+            self.iter = (i.rstrip("\n") for i in file.readlines())
 
     def exec(self) -> tuple[tuple[str, ...], ...]:
         result: list[tuple[str, ...]] = []
@@ -70,13 +68,14 @@ class parser:
                 if char in SPECIAL_CHARS:
                     all.append("".join(temp))
                     special = char
+                    temp.clear()
                 else:
                     temp.append(char)
             if temp:
                 all.append("".join(temp))
             all[0:0] = special
             result.append(tuple(i for i in all))
-        return tuple(i for i in result)
+        return tuple(result)
 
 
 def clear() -> None:
@@ -98,9 +97,10 @@ def get_char(prompt: str = "") -> str:
     return getche().decode()  # type: ignore
 
 
-def parse(path: str) -> list[tuple[set[str], answer]]:
+def parse(path: str) -> tuple[list[tuple[set[str], answer]], str]:
     result: list[tuple[set[str], answer]] = []
-    for line in parser(path).exec():
+    _ = parser(path).exec()
+    for line in _[1:]:
         if len(line) < 3:
             print(
                 "Error occured when pharsing file, found too few arguments in a line",
@@ -113,7 +113,7 @@ def parse(path: str) -> list[tuple[set[str], answer]]:
         elif special_char == ":":
             result.append(({line[1]}, answer(first=True, content=set(line[2:]))))
             result.append((set(line[2:]), answer(first=False, content={line[1]})))
-    return result
+    return result, _[0][0]
 
 
 def get_size() -> tuple[int, int]:
@@ -140,8 +140,12 @@ def study(*args: str) -> return_value:
         else:
             print(f"File {i} does not exist, skipping", file=sys.stderr)
     questions: dict[str, answer] = {}
+    titles: list[str] = []
     for i in files:
-        temp: list[tuple[set[str], answer]] = parse(i)
+        temp: list[tuple[set[str], answer]]
+        title: str
+        temp, title = parse(i)
+        titles.append(title)
         for dic in temp:
             for n in dic[0]:
                 questions.update({n: dic[1]})
@@ -152,23 +156,27 @@ def study(*args: str) -> return_value:
     random.shuffle(question_list)
     wrong_list: set[tuple[str, int]] = set()
     time: int = 0
+    print(" & ".join(titles))
     for i in question_list:
         time += 1
         print(f"{time}.", i)
         answer: str = input(">> ")
         trying: int = GLOBALS["chances"]
-        while answer not in questions[i].content:
-            trying -= 1
-            answer = input(">> ")
+        ans: str
+        while questions[i].content:
+            ans = questions[i].content.pop()
+            while answer != ans:
+                trying -= 1
+                answer = input(">> ")
+                if trying == 0:
+                    break
             if trying == 0:
-                break
-        if trying == 0:
-            print(
-                "You've ran out of chances! The correct answers are: ",
-                " or ".join(questions[i].content),
-            )
-        else:
-            print("Correct!")
+                print(
+                    "You've ran out of chances! The correct answers are: ",
+                    " and ".join(questions[i].content),
+                )
+            else:
+                print("Correct!")
         wrong_list.add((i, trying))
     for i in wrong_list:
         if i[1] < GLOBALS["chances"]:
