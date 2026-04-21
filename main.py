@@ -124,7 +124,7 @@ def get_size() -> tuple[int, int]:
 
 # main function
 def unknown(*args: str) -> return_value:
-    print("Unknown command: ", args[0])
+    print("Unknown command:", args[0])
     return return_value(try_again=False, exit=False)
 
 
@@ -308,6 +308,13 @@ def _set(*args: str) -> return_value:
     return result
 
 
+def ls(*args: str) -> return_value:
+    result = return_value(try_again=False, exit=False)
+    for [file, _, __] in os.walk(os.getcwd()):
+        print(file)
+    return result
+
+
 commands: dict[str, Callable[..., return_value]] = {
     "study": study,
     "cd": cd,
@@ -321,6 +328,7 @@ commands: dict[str, Callable[..., return_value]] = {
     "exec": _exec,
     "set": _set,
     "exit": lambda *args: return_value(try_again=False, exit=True),
+    "ls": ls,
 }
 alias: dict[str, str] = {}
 GLOBALS: dict[str, int] = {"chances": 10}
