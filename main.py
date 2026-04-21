@@ -129,6 +129,7 @@ def unknown(*args: str) -> return_value:
 
 
 def study(*args: str) -> return_value:
+    """Study a file."""
     result: return_value = return_value(try_again=False, exit=False)
     files: list[str] = []
     flags: set[str] = set()
@@ -266,6 +267,26 @@ def mv(*args: str) -> return_value:
     return result
 
 
+def _help(*args: str) -> return_value:
+    result = return_value(try_again=False, exit=False)
+    if len(args):
+        if args[1] in commands:
+            print(f"{args[1]}: {commands[args[1]].__doc__}")
+        else:
+            print("No such command")
+        return result
+    print("Available commands:")
+    for i in commands:
+        print(i)
+    return result
+
+
+def _clear(*args: str) -> return_value:
+    result = return_value(try_again=False, exit=False)
+    clear()
+    return result
+
+
 commands: dict[str, Callable[..., return_value]] = {
     "study": study,
     "cd": cd,
@@ -274,6 +295,8 @@ commands: dict[str, Callable[..., return_value]] = {
     "mv": mv,
     "alias": set_alias,
     "mkdir": mkdir,
+    "help": _help,
+    "clear": _clear,
 }
 alias: dict[str, str] = {}
 GLOBALS: dict[str, int] = {}
@@ -300,3 +323,8 @@ def executor() -> None:
             break
         except KeyboardInterrupt:
             continue
+
+
+if __name__ == "__main__":
+    print("Hello from study terminal! Type 'help' for available commands.")
+    executor()
