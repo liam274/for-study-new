@@ -23,6 +23,7 @@ from prompt_toolkit.key_binding import KeyBindings
 from ubelt import shrinkuser  # type: ignore
 
 SPECIAL_CHARS: str = "~:"
+MAGIC_STRING: str = "35c4p3d"
 
 
 @dataclass
@@ -154,13 +155,15 @@ def study(*args: str) -> return_value:
                 questions.update({n: dic[1]})
     if not questions:
         print("No valid file found, exiting", file=sys.stderr)
-        return_value(try_again=False, exit=True)
+        return result
     question_list: list[str] = list(questions.keys())
     random.shuffle(question_list)
     wrong_list: set[tuple[str, int]] = set()
     time: int = 0
-    print(" & ".join(titles))
+    title: str = " & ".join(titles)
     for i in question_list:
+        clear()
+        print(title)
         time += 1
         print(f"{time}.", i)
         answer: str = input(">> ")
@@ -169,7 +172,11 @@ def study(*args: str) -> return_value:
         while questions[i].content:
             ans = questions[i].content.pop()
             while answer != ans:
+                if answer == MAGIC_STRING:
+                    print("Magic string detected, exiting...")
+                    return result
                 trying -= 1
+                print("You're wrong! Please try again.")
                 answer = input(">> ")
                 if trying == 0:
                     break
@@ -266,6 +273,7 @@ def _help(*args: str) -> return_value:
     print("Available commands:")
     for i in commands:
         print(" " * 17, i)
+    print("Magic string(for escaping when you're studying):", MAGIC_STRING)
     return result
 
 
