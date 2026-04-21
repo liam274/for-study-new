@@ -168,11 +168,10 @@ def study(*args: str) -> return_value:
         time += 1
         print(f"{time}.", i)
         trying: int = GLOBALS["chances"]
-        ans: str
-        while questions[i].content:
-            ans = questions[i].content.pop()
+        sets: set[str] = questions[i].content
+        while sets:
             answer: str = input(">> ")
-            while answer != ans:
+            while answer not in sets:
                 if answer == MAGIC_STRING:
                     print("Magic string detected, exiting...")
                     return result
@@ -184,10 +183,11 @@ def study(*args: str) -> return_value:
             if trying == 0:
                 print(
                     "You've ran out of chances! The correct answers are: ",
-                    " and ".join(questions[i].content),
+                    " and ".join(sets),
                 )
             else:
                 print("Correct!")
+            sets.remove(answer)
         wrong_list.add((i, trying))
     for i in wrong_list:
         if i[1] < GLOBALS["chances"]:
