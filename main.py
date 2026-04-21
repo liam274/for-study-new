@@ -106,7 +106,7 @@ def parse(path: str) -> tuple[list[tuple[set[str], answer]], str]:
                 "Error occured when pharsing file, found too few arguments in a line",
                 file=sys.stderr,
             )
-            sys.exit()
+            return result, ""
         special_char: str = line[0]  # type: ignore
         if special_char == "~":
             result.append(({line[1]}, answer(first=True, content=set(line[2:]))))
@@ -145,6 +145,9 @@ def study(*args: str) -> return_value:
         temp: list[tuple[set[str], answer]]
         title: str
         temp, title = parse(i)
+        if not title:
+            print(f"File {i} is not valid, skipping", file=sys.stderr)
+            continue
         titles.append(title)
         for dic in temp:
             for n in dic[0]:
