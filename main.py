@@ -9,13 +9,16 @@ This is a project which helps people reduce the self-studying cost, aiming to im
 import os
 import random
 import sys
-from typing import Callable, TextIO, Any
-from prompt_toolkit import prompt as input
+from typing import Callable, Any
+
+# from prompt_toolkit import prompt as input
 from dataclasses import dataclass
 from getch import getche  # type: ignore
 import subprocess
 import shutil
-import curses
+
+# from rich import print
+from ubelt import shrinkuser  # type: ignore
 
 SPECIAL_CHARS: str = "~:"
 
@@ -66,25 +69,11 @@ class parser:
         return tuple(i for i in result)
 
 
-old_print = print
-path_join = os.path.join
-
-
 def clear() -> None:
     if os.name == "nt":
         subprocess.call(["cls"])
     else:
         subprocess.call(["clear"])
-
-
-def print(
-    *values: object,
-    sep: str = " ",
-    end: str = "\n",
-    file: TextIO = sys.stdout,
-    flush: bool = True,
-) -> None:
-    old_print("[for study]", *values, sep=sep, end=end, file=file, flush=flush)
 
 
 def default(value: str, default_value: int) -> int:
@@ -178,64 +167,17 @@ def study(*args: str) -> return_value:
 
 
 def cd(*args: str) -> return_value:
+    global working_dir, prompt
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
         print("No path provided")
         return result
     os.chdir(args[1])
+    working_dir = shrinkuser(os.getcwd())
+    prompt = (
+        f"{BOLD}{GREEN}{username}{RESET}{BOLD}:{BLUE}{working_dir}{YELLOW} $ {RESET}"
+    )
     return result
-
-
-BACKSPACE: set[int] = {curses.KEY_BACKSPACE, 127}
-ENTER: set[int] = {curses.KEY_ENTER, 10}
-UP: set[int] = {curses.KEY_UP, 72}
-DOWN: set[int] = {curses.KEY_DOWN, 80}
-LEFT: set[int] = {curses.KEY_LEFT, 75}
-RIGHT: set[int] = {curses.KEY_RIGHT, 77}
-
-
-def real_nano(stdscr: Any, path: str) -> None:
-    curses.echo()
-    with open(path, "r") as file:
-        content: list[str] = file.readlines()
-    for i, line in enumerate(content):
-        stdscr.addstr(i, 0, line)
-    stdscr.refresh()
-    while True:
-        key: int = stdscr.getch()
-        if key == 27:  # ESC
-            break
-        elif key in BACKSPACE:
-            y, x = stdscr.getyx()
-            if x > 0:
-                stdscr.delch(y, x - 1)
-                stdscr.move(y, x - 1)
-        elif key in ENTER:
-            y, x = stdscr.getyx()
-            stdscr.insertln()
-            stdscr.move(y + 1, 0)
-        elif key in UP:
-            y, x = stdscr.getyx()
-            if y > 0:
-                stdscr.move(y - 1, x)
-        elif key in DOWN:
-            y, x = stdscr.getyx()
-            if y < get_size()[1] - 1:
-                stdscr.move(y + 1, x)
-        elif key in LEFT:
-            y, x = stdscr.getyx()
-            if x > 0:
-                stdscr.move(y, x - 1)
-        elif key in RIGHT:
-            y, x = stdscr.getyx()
-            if x < get_size()[0] - 1:
-                stdscr.move(y, x + 1)
-        else:
-            stdscr.addch(key)
-    with open(path, "w") as file:
-        for i in range(get_size()[1]):
-            line = stdscr.instr(i, 0).decode().rstrip()
-            file.write(line + "\n")
 
 
 def nano(*args: str) -> return_value:
@@ -244,7 +186,8 @@ def nano(*args: str) -> return_value:
         print("No path provided")
         return result
     clear()
-    curses.wrapper(real_nano, args[1])
+    print(args)
+    subprocess.call(["nano", args[1]])
     clear()
     return result
 
@@ -334,8 +277,14 @@ def _set(*args: str) -> return_value:
 
 def ls(*args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
-    for [file, _, __] in os.walk(os.getcwd()):
-        print(file)
+    for [_, dirs, files] in os.walk(os.getcwd()):
+        for dir in dirs:
+            print(dir + "/")
+        for file in files:
+            if file.startswith("."):
+                continue
+            print(file)
+        dirs.clear()
     return result
 
 
@@ -346,6 +295,25 @@ def cat(*args: str) -> return_value:
         return result
     with open(args[1], "r") as file:
         print(file.read())
+    return result
+
+
+def whoami(*args: str) -> return_value:
+    result = return_value(try_again=False, exit=False)
+    print(f'You are "{username}", who has been studying hard!')
+    return result
+
+
+def echo(*args: str) -> return_value:
+    result = return_value(try_again=False, exit=False)
+    print(" ".join(args[1:]))
+    return result
+
+
+def restart(*args: str) -> return_value:
+    result = return_value(try_again=False, exit=False)
+    print("Restarting...")
+    os.execv(sys.executable, [sys.executable] + sys.argv)
     return result
 
 
@@ -363,16 +331,27 @@ commands: dict[str, Callable[..., return_value]] = {
     "set": _set,
     "exit": lambda *args: return_value(try_again=False, exit=True),
     "ls": ls,
+    "cat": cat,
+    "whoami": whoami,
+    "echo": echo,
 }
 alias: dict[str, str] = {}
 GLOBALS: dict[str, int] = {"chances": 10}
 DEFAULTS: dict[str, int] = {"chances": 10}
+username: str = os.getenv("USER", "student")
+BOLD = "\033[1m"
+RESET = "\033[0m"
+GREEN = "\033[32m"
+YELLOW = "\033[33m"
+BLUE = "\033[34m"
+working_dir: str = shrinkuser(os.getcwd())
+prompt = f"{BOLD}{GREEN}{username}{RESET}{BOLD}:{BLUE}{working_dir}{YELLOW} $ {RESET}"
 
 
 def executor() -> None:
     while 1:
         try:
-            pre_command: tuple[str, ...] = tuple(input("$ ").split())
+            pre_command: tuple[str, ...] = tuple(input(prompt).split())
             command: str = pre_command[0]
             arguments: tuple[str, ...] = pre_command
             value: return_value = commands.get(command, unknown)(*arguments)
@@ -386,6 +365,7 @@ def executor() -> None:
                 continue
             break
         except KeyboardInterrupt:
+            print()
             continue
 
 
