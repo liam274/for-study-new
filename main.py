@@ -11,11 +11,13 @@ import random
 import sys
 from typing import Callable, Any
 
-# from prompt_toolkit import prompt as input
+from prompt_toolkit import prompt as input
 from dataclasses import dataclass
 from getch import getche  # type: ignore
 import subprocess
 import shutil
+from prompt_toolkit.formatted_text import ANSI
+from prompt_toolkit.key_binding import KeyBindings
 
 # from rich import print
 from ubelt import shrinkuser  # type: ignore
@@ -33,6 +35,14 @@ class answer:
 class return_value:
     try_again: bool
     exit: bool
+
+
+bindings = KeyBindings()
+
+
+@bindings.add("tab")
+def _(event: Any):
+    event.current_buffer.insert_text("\t")
 
 
 class parser:
@@ -122,7 +132,7 @@ def study(*args: str) -> return_value:
     result: return_value = return_value(try_again=False, exit=False)
     files: list[str] = []
     flags: set[str] = set()
-    for i in args:
+    for i in args[1:]:
         if i.startswith("-"):
             flags.add(i)
         elif os.path.isfile(i):
@@ -314,6 +324,7 @@ def restart(*args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     print("Restarting...")
     os.execv(sys.executable, [sys.executable] + sys.argv)
+    sys.exit()
     return result
 
 
@@ -334,6 +345,7 @@ commands: dict[str, Callable[..., return_value]] = {
     "cat": cat,
     "whoami": whoami,
     "echo": echo,
+    "refresh": restart,
 }
 alias: dict[str, str] = {}
 GLOBALS: dict[str, int] = {"chances": 10}
@@ -351,7 +363,9 @@ prompt = f"{BOLD}{GREEN}{username}{RESET}{BOLD}:{BLUE}{working_dir}{YELLOW} $ {R
 def executor() -> None:
     while 1:
         try:
-            pre_command: tuple[str, ...] = tuple(input(prompt).split())
+            pre_command: tuple[str, ...] = tuple(
+                input(ANSI(prompt), key_bindings=bindings).split()
+            )
             command: str = pre_command[0]
             arguments: tuple[str, ...] = pre_command
             value: return_value = commands.get(command, unknown)(*arguments)
