@@ -84,7 +84,7 @@ def clear() -> None:
     if os.name == "nt":
         subprocess.call(["cls"])
     else:
-        subprocess.call(["clear"])
+        print("\033[2J\033[H", end="")
 
 
 def default(value: str, default_value: int) -> int:
