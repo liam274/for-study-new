@@ -1,3 +1,4 @@
+#!/usr/bin/python
 """
 file: main.py
 author: liam274
@@ -212,7 +213,7 @@ def cd(*args: str) -> return_value:
     return result
 
 
-def nano(*args: str) -> return_value:
+def vim(*args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
         print("No path provided")
@@ -222,7 +223,7 @@ def nano(*args: str) -> return_value:
         return result
     clear()
     print(args)
-    subprocess.call(["nano", args[1]])
+    subprocess.call(["vim", args[1]])
     clear()
     return result
 
@@ -382,7 +383,7 @@ def rm(*args: str) -> return_value:
 commands: dict[str, Callable[..., return_value]] = {
     "study": study,
     "cd": cd,
-    "nano": nano,
+    "vim": vim,
     "cp": cp,
     "mv": mv,
     "alias": set_alias,
