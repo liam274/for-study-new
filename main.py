@@ -18,7 +18,14 @@ from getch import getche  # type: ignore
 import subprocess
 import shutil
 from prompt_toolkit.formatted_text import ANSI
-from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.history import InMemoryHistory
+from prompt_toolkit.completion import (
+    Completer,
+    Completion,
+    PathCompleter,
+    CompleteEvent,
+)
+from prompt_toolkit.document import Document
 
 # from rich import print
 from ubelt import shrinkuser  # type: ignore
@@ -41,12 +48,37 @@ class return_value:
     exit: bool
 
 
-bindings = KeyBindings()
+class StudyCompleter(Completer):
+    def __init__(self):
+        # 可被补全的命令词（包含别名）
+        self.cmd_list = list(commands.keys()) + list(alias.keys())
+        # 用于补全文件/目录路径
+        self.path_completer = PathCompleter(expanduser=True)
 
-
-@bindings.add("tab")
-def _(event: Any):
-    event.current_buffer.insert_text("\t")
+    def get_completions(self, document: Document, complete_event: CompleteEvent):  # type: ignore
+        text = document.text_before_cursor
+        words = text.split()
+        if not words:
+            return
+        if len(words) == 1 and not text.endswith(" "):
+            # 命令补全
+            current = words[0]
+            for cmd in self.cmd_list:
+                if cmd.startswith(current):
+                    yield Completion(cmd, start_position=-len(current))
+        else:
+            # 路径补全：只取光标前的最后一个路径段
+            # 找到光标前最后一个空白字符的位置
+            last_space_index = text.rfind(" ")
+            if last_space_index == -1:
+                # 没有空格，应该走命令补全，但代码不会到这里
+                return
+            path_text = text[last_space_index + 1 :]
+            # 创建新的 document，光标在路径末尾
+            path_document = Document(text=path_text, cursor_position=len(path_text))
+            yield from self.path_completer.get_completions(
+                path_document, complete_event
+            )
 
 
 class parser:
@@ -445,10 +477,17 @@ prompt = f"{BOLD}{GREEN}{username}{RESET}{BOLD}:{BLUE}{working_dir}{YELLOW} $ {R
 
 
 def executor() -> None:
+    history = InMemoryHistory()
+    completer = StudyCompleter()
     while 1:
         try:
             pre_command: tuple[str, ...] = tuple(
-                input(ANSI(prompt), key_bindings=bindings).split()
+                input(
+                    ANSI(prompt),
+                    history=history,
+                    completer=completer,
+                    complete_while_typing=True,
+                ).split()
             )
             command: str = pre_command[0]
             command = alias.get(command, command)
