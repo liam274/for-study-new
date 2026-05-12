@@ -22,6 +22,7 @@ from prompt_toolkit.key_binding import KeyBindings
 
 # from rich import print
 from ubelt import shrinkuser  # type: ignore
+import time as time_module
 
 SPECIAL_CHARS: str = "~:"
 MAGIC_STRING: str = "35c4p3d"
@@ -60,13 +61,29 @@ class parser:
             temp: list[str] = []
             special: str = ""
             skip: bool = False
+            in_formula: bool = False
+            form: str = ""
+            t: int = -1
             for char in i:
+                t += 1
+                if in_formula:
+                    form += char
+                    if char == ">":
+                        in_formula = False
+                        special = form
+                    continue
                 if skip:
                     temp.append(char)
                     skip = False
                     continue
                 if char == "\\":
                     skip = True
+                    continue
+                if char == "-" and i[t + 1] == "(":
+                    in_formula = True
+                    form = "-"
+                    all.append("".join(temp))
+                    temp.clear()
                     continue
                 if char in SPECIAL_CHARS:
                     all.append("".join(temp))
@@ -76,7 +93,8 @@ class parser:
                     temp.append(char)
             if temp:
                 all.append("".join(temp))
-            all[0:0] = special
+            if special:
+                all[0:0] = [special]
             result.append(tuple(i for i in all))
         return tuple(result)
 
@@ -116,6 +134,23 @@ def parse(path: str) -> tuple[list[tuple[set[str], answer]], str]:
         elif special_char == ":":
             result.append(({line[1]}, answer(first=True, content=set(line[2:]))))
             result.append((set(line[2:]), answer(first=False, content={line[1]})))
+        elif special_char.startswith("-("):
+            result.append(
+                (
+                    {line[1] + special_char},
+                    answer(
+                        first=True, content=set(i.strip() for i in line[2].split("+"))
+                    ),
+                )
+            )
+            result.append(
+                (
+                    {special_char + line[2]},
+                    answer(
+                        first=False, content=set(i.strip() for i in line[1].split("+"))
+                    ),
+                )
+            )
     return result, _[0][0]
 
 
@@ -170,25 +205,21 @@ def study(*args: str) -> return_value:
         print(f"{time}.", i)
         trying: int = GLOBALS["chances"]
         sets: set[str] = questions[i].content
-        while sets:
-            answer: str = input(">> ")
-            while answer not in sets:
-                if answer == MAGIC_STRING:
-                    print("Magic string detected, exiting...")
-                    return result
-                trying -= 1
-                print("You're wrong! Please try again.")
-                answer = input(">> ")
-                if trying == 0:
-                    break
+        while (answer := set(i.strip() for i in input(">> ").split("+"))) != sets:
+            if MAGIC_STRING in answer:
+                print("Magic string detected, exiting...")
+                return result
+            trying -= 1
+            print("You're wrong! Please try again.")
             if trying == 0:
                 print(
                     "You've ran out of chances! The correct answers are: ",
                     " and ".join(sets),
                 )
-            else:
-                print("Correct!")
-            sets.remove(answer)
+                break
+        else:
+            print("Correct!")
+        time_module.sleep(0.1)
         wrong_list.add((i, trying))
     for i in wrong_list:
         if i[1] < GLOBALS["chances"]:
