@@ -231,13 +231,11 @@ def study(*args: str) -> return_value:
     time: int = 0
     title: str = " & ".join(titles)
     total: int = len(question_list)
-    consumed: int = 0
     for i in question_list:
         clear()
         print(title)
-        consumed += 1
         time += 1
-        print(f"({consumed}/{total}){time}.", i)
+        print(f"(Total: {total}){time}.", i)
         trying: int = GLOBALS["chances"]
         sets: set[str] = questions[i].content
         while (answer := set(i.strip() for i in input(">> ").split("+"))) != sets:
