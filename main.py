@@ -111,7 +111,7 @@ class parser:
                 if char == "\\":
                     skip = True
                     continue
-                if char == "-" and i[t + 1] == "(":
+                if char == "-" and i[t + 1] in "(>":
                     in_formula = True
                     form = "-"
                     all.append("".join(temp))
@@ -230,11 +230,14 @@ def study(*args: str) -> return_value:
     wrong_list: set[tuple[str, int]] = set()
     time: int = 0
     title: str = " & ".join(titles)
+    total: int = len(question_list)
+    consumed: int = 0
     for i in question_list:
         clear()
         print(title)
+        consumed += 1
         time += 1
-        print(f"{time}.", i)
+        print(f"({consumed}/{total}){time}.", i)
         trying: int = GLOBALS["chances"]
         sets: set[str] = questions[i].content
         while (answer := set(i.strip() for i in input(">> ").split("+"))) != sets:
@@ -251,7 +254,8 @@ def study(*args: str) -> return_value:
                 break
         else:
             print("Correct!")
-        time_module.sleep(0.1)
+            time_module.sleep(0.1)
+            continue
         wrong_list.add((i, trying))
     for i in wrong_list:
         if i[1] < GLOBALS["chances"]:
