@@ -10,7 +10,7 @@ This is a project which helps people reduce the self-studying cost, aiming to im
 import os
 import random
 import sys
-from typing import Callable, Any
+from typing import Callable, Any, Iterator
 
 from prompt_toolkit import prompt as input
 from dataclasses import dataclass
@@ -81,6 +81,14 @@ class StudyCompleter(Completer):
             )
 
 
+class meta_data_parser:
+    def __init__(self: meta_data_parser):
+        pass
+
+    def meta(self: meta_data_parser, data: Iterator[str]):
+        pass
+
+
 class parser:
     def __init__(self: parser, path: str):
         with open(path, "r") as file:
@@ -88,7 +96,20 @@ class parser:
 
     def exec(self) -> tuple[tuple[str, ...], ...]:
         result: list[tuple[str, ...]] = []
+        is_meta: bool = False
+        metas: list[str] = []
+        meta_data: meta_data_parser = meta_data_parser()
         for i in self.iter:
+            if is_meta:
+                if i == "[meta end]":
+                    is_meta = False
+                    meta_data.meta(i for i in metas)
+                else:
+                    metas.append(i)
+                continue
+            if i == "[meta start]":
+                is_meta = True
+                continue
             all: list[str] = []
             temp: list[str] = []
             special: str = ""
@@ -111,7 +132,7 @@ class parser:
                 if char == "\\":
                     skip = True
                     continue
-                if char == "-" and i[t + 1] in "(>":
+                if char == "-" and len(i) > t + 1 and i[t + 1] in "(>":
                     in_formula = True
                     form = "-"
                     all.append("".join(temp))
@@ -235,7 +256,7 @@ def study(*args: str) -> return_value:
         clear()
         print(title)
         time += 1
-        print(f"(Total: {total}){time}.", i)
+        print(f"({time}/{total})", i)
         trying: int = GLOBALS["chances"]
         sets: set[str] = questions[i].content
         while (answer := set(i.strip() for i in input(">> ").split("+"))) != sets:
