@@ -81,12 +81,19 @@ class StudyCompleter(Completer):
             )
 
 
+modify: dict[str, Callable[[list[str]], list[str]]] = {
+    "dismiss": lambda x: ":".join(x).split(",")
+}
+
+
 class meta_data_parser:
     def __init__(self: meta_data_parser):
-        pass
+        self.data: dict[str, list[str]] = {}
 
     def meta(self: meta_data_parser, data: Iterator[str]):
-        pass
+        for _ in data:
+            command, *argument = _.split(":")
+            self.data[command] = modify[command](argument)
 
 
 class parser:
@@ -252,6 +259,7 @@ def study(*args: str) -> return_value:
     time: int = 0
     title: str = " & ".join(titles)
     total: int = len(question_list)
+    history = InMemoryHistory()
     for i in question_list:
         clear()
         print(title)
@@ -259,7 +267,9 @@ def study(*args: str) -> return_value:
         print(f"({time}/{total})", i)
         trying: int = GLOBALS["chances"]
         sets: set[str] = questions[i].content
-        while (answer := set(i.strip() for i in input(">> ").split("+"))) != sets:
+        while (
+            answer := set(i.strip() for i in input(">> ", history=history).split("+"))
+        ) != sets:
             if MAGIC_STRING in answer:
                 print("Magic string detected, exiting...")
                 return result
@@ -499,18 +509,44 @@ working_dir: str = shrinkuser(os.getcwd())
 prompt = f"{BOLD}{GREEN}{username}{RESET}{BOLD}:{BLUE}{working_dir}{YELLOW} $ {RESET}"
 
 
+def compile(data: str) -> tuple[str, ...]:
+    result: list[str] = []
+    skip: bool = False
+    temp: list[str] = []
+    in_str: bool = False
+    for char in data:
+        if skip:
+            skip = False
+            temp.append(char)
+            continue
+        if char == '"':
+            in_str = not in_str
+            continue
+        if in_str:
+            temp.append(char)
+            continue
+        if char == " ":
+            result.append("".join(temp))
+            temp.clear()
+            continue
+        temp.append(char)
+    if temp:
+        result.append("".join(temp))
+    return tuple(result)
+
+
 def executor() -> None:
     history = InMemoryHistory()
     completer = StudyCompleter()
     while 1:
         try:
-            pre_command: tuple[str, ...] = tuple(
+            pre_command: tuple[str, ...] = compile(
                 input(
                     ANSI(prompt),
                     history=history,
                     completer=completer,
                     complete_while_typing=True,
-                ).split()
+                )
             )
             command: str = pre_command[0]
             command = alias.get(command, command)
