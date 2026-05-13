@@ -88,12 +88,17 @@ modify: dict[str, Callable[[list[str]], list[str]]] = {
 
 class meta_data_parser:
     def __init__(self: meta_data_parser):
-        self.data: dict[str, list[str]] = {}
+        self.data: dict[str, list[str]] = {"dismiss": []}
 
     def meta(self: meta_data_parser, data: Iterator[str]):
         for _ in data:
             command, *argument = _.split(":")
-            self.data[command] = modify[command](argument)
+            self.data[command] += modify[command](argument)
+
+    def run_rule(self: meta_data_parser, data: str) -> str:
+        for rule in self.data["dismiss"]:
+            data = data.replace(rule, "")
+        return data
 
 
 class parser:
@@ -106,6 +111,7 @@ class parser:
         is_meta: bool = False
         metas: list[str] = []
         meta_data: meta_data_parser = meta_data_parser()
+        data: list[str] = []
         for i in self.iter:
             if is_meta:
                 if i == "[meta end]":
@@ -117,6 +123,8 @@ class parser:
             if i == "[meta start]":
                 is_meta = True
                 continue
+            data.append(i)
+        for i in meta_data.run_rule("\n".join(data)).split("\n"):
             all: list[str] = []
             temp: list[str] = []
             special: str = ""
