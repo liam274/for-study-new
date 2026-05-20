@@ -82,13 +82,14 @@ class StudyCompleter(Completer):
 
 
 modify: dict[str, Callable[[list[str]], list[str]]] = {
-    "dismiss": lambda x: ":".join(x).split(",")
+    "dismiss": lambda x: ":".join(x).split(",,"),
+    "set": lambda x: ":".join(x).split(",,")
 }
 
 
 class meta_data_parser:
     def __init__(self: meta_data_parser):
-        self.data: dict[str, list[str]] = {"dismiss": []}
+        self.data: dict[str, list[str]] = {"dismiss": [],"set":[]}
 
     def meta(self: meta_data_parser, data: Iterator[str]):
         for _ in data:
@@ -272,9 +273,15 @@ def study(*args: str) -> return_value:
         clear()
         print(title)
         time += 1
+        temp: answer=questions[i]
+        sets: set[str] = temp.content
+        splitor: str=" ".join(["_"]*len("".join(sets)))
+        if temp.first:
+            i+=splitor
+        else:
+            i=splitor+i
         print(f"({time}/{total})", i)
         trying: int = GLOBALS["chances"]
-        sets: set[str] = questions[i].content
         while (
             answer := set(i.strip() for i in input(">> ", history=history).split("+"))
         ) != sets:
