@@ -277,13 +277,14 @@ def study(*args: str) -> return_value:
         sets: set[str] = temp.content
         splitor: str=" ".join(["_"]*len("".join(sets)))
         if temp.first:
-            i+=splitor
+            i+=" "+splitor
         else:
-            i=splitor+i
+            i=splitor+" "+i
+        qer: str=len(f"{time}{total} ")*" "
         print(f"({time}/{total})", i)
         trying: int = GLOBALS["chances"]
         while (
-            answer := set(i.strip() for i in input(">> ", history=history).split("+"))
+            answer := set(i.strip() for i in input(qer+">> ", history=history).split("+"))
         ) != sets:
             if MAGIC_STRING in answer:
                 print("Magic string detected, exiting...")
