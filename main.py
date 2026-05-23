@@ -13,6 +13,7 @@ import sys
 from typing import Callable, Any, Iterator
 import requests
 import itertools
+from collections import deque
 
 from prompt_toolkit import prompt as input
 from dataclasses import dataclass
@@ -91,6 +92,35 @@ class StudyCompleter(Completer):
             )
 
 
+class ExtendableIterator[T]:
+    def __init__(self, initial_iterator: Iterator[T]):
+        self._source = initial_iterator  # original iterator
+        self._buffer: deque[T] = deque()  # items added dynamically
+        self._exhausted = False
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        # First, try to yield from the buffer
+        if self._buffer:
+            return self._buffer.popleft()
+        # Buffer empty – try the original source
+        try:
+            return next(self._source)
+        except StopIteration:
+            self._exhausted = True
+            raise
+
+    def extend(self, items: T):
+        """Add more items to be yielded later."""
+        self._buffer.extend((items,))
+
+    def is_exhausted(self):
+        """Return True if both source and buffer are empty."""
+        return self._exhausted and not self._buffer
+
+
 basic: Callable[[str], Iterator[str]] = lambda x: (i.strip() for i in x.split(",,"))
 
 modify: dict[str, Callable[[str], Iterator[str]]] = {
@@ -103,7 +133,7 @@ modify: dict[str, Callable[[str], Iterator[str]]] = {
 
 class meta_data_parser:
     def __init__(self: meta_data_parser):
-        self.data: dict[str, list[str]] = {
+        self.data: dict[str, list[tuple[str, ...]]] = {
             "dismiss": [],
             "set": [],
             "mode": [],
@@ -113,7 +143,8 @@ class meta_data_parser:
     def meta(self: meta_data_parser, data: Iterator[str]):
         macro: dict[str, str] = {}
         data, data2 = itertools.tee(data)
-        for line_num, line in enumerate(data):
+        dataa: ExtendableIterator[str] = ExtendableIterator(data)
+        for line_num, line in enumerate(dataa):
             if line[0] != "%":
                 continue
             if line[1] == "%":  # comment
@@ -125,7 +156,7 @@ class meta_data_parser:
                 elif line.startswith("%include"):
                     _, name = line.split(maxsplit=2)
                     if not os.path.exists(name):
-                        print("Error occurred when trying to open file")
+                        print(f"Error occurred when trying to open file {name}")
                     s: list[str] = []
                     meta: bool = False
                     with open(name, encoding="utf-8") as file:
@@ -138,10 +169,25 @@ class meta_data_parser:
                             if meta:
                                 s.append(i)
                     data2 = itertools.chain(data2, (i for i in s))
+                elif line.startswith("%import"):
+                    _, name = line.split(maxsplit=2)
+                    if not os.path.exists(name):
+                        print(f"Error occurred when trying to open file {name}")
+                    meta: bool = False
+                    with open(name, encoding="utf-8") as file:
+                        for i in file.readlines():
+                            i = i.strip()
+                            if i == "[meta start]":
+                                meta = True
+                            elif i == "[meta end]":
+                                meta = False
+                            if meta:
+                                dataa.extend(i)
             except ValueError:
                 print(
                     f'Error occurred at line {line_num}, macro "{line.split(" ")[0]}" does not have enough parameter'
                 )
+
         for ln, _ in enumerate(data2):
             if _.startswith("%"):
                 continue
@@ -150,14 +196,13 @@ class meta_data_parser:
                 return
             command, argument = _.split(":", maxsplit=1)
             self.data[command] += list(
-                macro.get(i, i) for i in modify[command](argument)
+                tuple(macro.get(i, i).split("^")) for i in modify[command](argument)
             )
 
     def run_rule(self: meta_data_parser, data: str) -> str:
         for rule in self.data["dismiss"]:
-            data = data.replace(rule, "")
+            data = data.replace(rule[0], "")
         for rule in self.data["define"]:
-            rule = rule.split("^")
             data = data.replace(rule[0], rule[1])
         return data
 
@@ -167,7 +212,9 @@ class parser:
         with open(path, "r", encoding="utf-8") as file:
             self.iter = (i.rstrip("\n") for i in file.readlines())
 
-    def exec(self) -> tuple[tuple[tuple[str, ...], ...], dict[str, list[str]]]:
+    def exec(
+        self,
+    ) -> tuple[tuple[tuple[str, ...], ...], dict[str, list[tuple[str, ...]]]]:
         result: list[tuple[str, ...]] = []
         is_meta: bool = False
         metas: list[str] = []
@@ -259,7 +306,7 @@ def get_char(prompt: str = "") -> str:
 
 def parse(
     path: str,
-) -> tuple[tuple[list[tuple[set[str], answer]], str], dict[str, list[str]]]:
+) -> tuple[tuple[list[tuple[set[str], answer]], str], dict[str, list[tuple[str, ...]]]]:
     result: list[tuple[set[str], answer]] = []
     _, rules = parser(path).exec()
     for line in _[1:]:
@@ -320,13 +367,13 @@ def study(_: list[str], *args: str) -> return_value:
             print(f"File {i} does not exist, skipping", file=sys.stderr)
     questions: dict[str, answer] = {}
     titles: list[str] = []
-    rule: dict[str, list[str]] = {}
+    rule: dict[str, set[tuple[str, ...]]] = {}
     for i in files:
         _: list[tuple[set[str], answer]]
         title: str
         (_, title), rule_temp = parse(i)
         for name, _rule in rule_temp.items():
-            rule.update({name: _rule + rule.get(name, [])})
+            rule.update({name: set(_rule).union(rule.get(name, set()))})
         if not title:
             print(f"File {i} is not valid, skipping", file=sys.stderr)
             continue
@@ -357,14 +404,14 @@ def study(_: list[str], *args: str) -> return_value:
         sets: set[str] = temp.content
         splitor: str = (
             " ".join(["_"] * len("".join(sets)))
-            if "no-filling" not in rule["set"]
+            if ("no-filling",) not in rule["set"]
             else ""
         )
         if temp.first:
             i += " " + splitor
         else:
             i = splitor + " " + i
-        qer: str = (len(f"{time}{total} ") + (len(splitor) if temp.first else 0)) * " "
+        qer: str = (len(f"{time}{total} ")) * " "
         print(f"({time}/{total})", i)
         trying: int = GLOBALS["chances"]
         while (
@@ -419,9 +466,7 @@ def vim(flags: list[str], *args: str) -> return_value:
     if os.path.isdir(args[1]):
         print(f"{args[1]} is a directory")
         return result
-    clear()
     subprocess.call(["vim", args[1], *flags])
-    clear()
     return result
 
 
