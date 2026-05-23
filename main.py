@@ -570,6 +570,12 @@ def look_up(flags: list[str], *args: str) -> return_value:
             file.write("")
     with open(args[1] + ".dtb", "a") as file:
         file.write(input("title? ") + "\n")
+        if input("meta data?") in ("yes", "y"):
+            file.write("[meta start]")
+            inp: str
+            while (inp := input("meta data >> ")) != "END META":
+                file.write(inp)
+            file.write("[meta end]")
         for word, definition in res.items():
             file.write(f"{definition}~{word.strip()}\n")
     print(f"Ouput was written in file {args[1]}.dtb")
