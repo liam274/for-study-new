@@ -355,7 +355,7 @@ def study(_: list[str], *args: str) -> return_value:
             i += " " + splitor
         else:
             i = splitor + " " + i
-        qer: str = (len(f"{time}{total} ") + (0 if temp.first else len(splitor))) * " "
+        qer: str = (len(f"{time}{total} ") + (len(splitor) if temp.first else 0)) * " "
         print(f"({time}/{total})", i)
         trying: int = GLOBALS["chances"]
         while (
