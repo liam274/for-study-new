@@ -35,6 +35,7 @@ import time as time_module
 SPECIAL_CHARS: str = "~:"
 MAGIC_STRING: str = "35c4p3d"
 trues: set[str] = {"y", "yes", "true"}
+PATH: str = os.getcwd()
 
 
 @dataclass
@@ -49,36 +50,43 @@ class return_value:
     exit: bool
 
 
-class StudyCompleter(Completer):  # deepseek's job
+class StudyCompleter(Completer):
     def __init__(self):
-        # 可被补全的命令词（包含别名）
         self.cmd_list = list(commands.keys()) + list(alias.keys())
-        # 用于补全文件/目录路径
+        # 注意：如果你的库确实不支持 quote_char，请勿传入该参数
         self.path_completer = PathCompleter(expanduser=True)
 
-    def get_completions(self, document: Document, complete_event: CompleteEvent):  # type: ignore
+    def get_completions(self, document: Document, complete_event: CompleteEvent):
         text = document.text_before_cursor
         words = text.split()
         if not words:
             return
+
+        # 命令补全
         if len(words) == 1 and not text.endswith(" "):
-            # 命令补全
             current = words[0]
             for cmd in self.cmd_list:
                 if cmd.startswith(current):
                     yield Completion(cmd, start_position=-len(current))
-        else:
-            # 路径补全：只取光标前的最后一个路径段
-            # 找到光标前最后一个空白字符的位置
-            last_space_index = text.rfind(" ")
-            if last_space_index == -1:
-                # 没有空格，应该走命令补全，但代码不会到这里
-                return
-            path_text = text[last_space_index + 1 :]
-            # 创建新的 document，光标在路径末尾
-            path_document = Document(text=path_text, cursor_position=len(path_text))
-            yield from self.path_completer.get_completions(
-                path_document, complete_event
+            return
+
+        # 路径补全
+        last_space = text.rfind(" ")
+        if last_space == -1:
+            return
+        partial_path = text[last_space + 1 :]  # 用户已输入的路径片段
+        path_doc = Document(text=partial_path, cursor_position=len(partial_path))
+
+        for comp in self.path_completer.get_completions(path_doc, complete_event):
+            # comp.text 是 PathCompleter 给出的剩余补全部分（不含已输入前缀）
+            full_path = partial_path + comp.text  # 拼接出完整路径
+            # 如果完整路径含有空格，加双引号包裹
+            if " " in full_path:
+                full_path = f'"{full_path}"'
+
+            # 替换范围：从 partial_path 开始的部分全部替换为 full_path
+            yield Completion(
+                full_path, start_position=-len(partial_path), display=comp.display
             )
 
 
@@ -478,7 +486,7 @@ def echo(flags: list[str], *args: str) -> return_value:
 def restart(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     print("Restarting...")
-    os.execv(sys.executable, [sys.executable] + sys.argv)
+    os.execv(sys.executable, [sys.executable, os.path.join(PATH, sys.argv[0])])
     sys.exit()
     return result
 
