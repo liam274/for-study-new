@@ -355,7 +355,7 @@ def study(_: list[str], *args: str) -> return_value:
             i += " " + splitor
         else:
             i = splitor + " " + i
-        qer: str = len(f"{time}{total} ") * " "
+        qer: str = (len(f"{time}{total} ") + len(splitor)) * " "
         print(f"({time}/{total})", i)
         trying: int = GLOBALS["chances"]
         while (
@@ -411,7 +411,6 @@ def vim(flags: list[str], *args: str) -> return_value:
         print(f"{args[1]} is a directory")
         return result
     clear()
-    print(args)
     subprocess.call(["vim", args[1], *flags])
     clear()
     return result
