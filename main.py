@@ -12,6 +12,7 @@ import random
 import sys
 from typing import Callable, Any, Iterator
 import requests
+from itertools import tee
 
 from prompt_toolkit import prompt as input
 from dataclasses import dataclass
@@ -90,11 +91,9 @@ class StudyCompleter(Completer):
             )
 
 
-basic: Callable[[list[str]], list[str]] = lambda x: ":".join(
-    i.strip() for i in x
-).split(",,")
+basic: Callable[[str], Iterator[str]] = lambda x: (i.strip() for i in x.split(",,"))
 
-modify: dict[str, Callable[[list[str]], list[str]]] = {
+modify: dict[str, Callable[[str], Iterator[str]]] = {
     "dismiss": basic,
     "set": basic,
 }
@@ -105,9 +104,19 @@ class meta_data_parser:
         self.data: dict[str, list[str]] = {"dismiss": [], "set": []}
 
     def meta(self: meta_data_parser, data: Iterator[str]):
-        for _ in data:
-            command, *argument = _.split(":")
-            self.data[command] += modify[command](argument)
+        macro: dict[str, str] = {}
+        data, data2 = tee(data)
+        for line in data:
+            if line.startswith("%define"):
+                _, name, value = line.split(maxsplit=2)
+                macro[name] = value.strip('"')
+        for _ in data2:
+            if _.startswith("%"):
+                continue
+            command, argument = _.split(":", maxsplit=1)
+            self.data[command] += list(
+                macro.get(i, i) for i in modify[command](argument)
+            )
 
     def run_rule(self: meta_data_parser, data: str) -> str:
         for rule in self.data["dismiss"]:
@@ -278,7 +287,8 @@ def study(_: list[str], *args: str) -> return_value:
         _: list[tuple[set[str], answer]]
         title: str
         (_, title), rule_temp = parse(i)
-        rule.update(rule_temp)
+        for name, _rule in rule_temp.items():
+            rule.update({name: _rule + rule.get(name, [])})
         if not title:
             print(f"File {i} is not valid, skipping", file=sys.stderr)
             continue
