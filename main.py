@@ -571,7 +571,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
     with open(args[1] + ".dtb", "a") as file:
         file.write(input("title? ") + "\n")
         for word, definition in res.items():
-            file.write(f"{word.strip()}~{definition}\n")
+            file.write(f"{definition}~{word.strip()}\n")
     print(f"Ouput was written in file {args[1]}.dtb")
     return result
 
