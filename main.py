@@ -335,7 +335,7 @@ def study(_: list[str], *args: str) -> return_value:
     title: str = " & ".join(titles)
     total: int = len(question_list)
     history = InMemoryHistory()
-    if len(set(rule["mode"])) - 1:
+    if len(set(rule["mode"])) > 1:
         print(
             f"Error occurred when trying to study with {{{", ".join(args)}}}, found multiple mode. You may only study in one mode at a time."
         )
@@ -589,7 +589,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
             print(word)
             defs = fetch(DEFAULT_URL + word.strip())[0]["meanings"]
             ins: int = 0
-            if len(defs) - 1:
+            if len(defs) > 1:
                 for i, entry in enumerate(defs):
                     print(
                         f"{i+1}. ({entry["partOfSpeech"]}) {entry["definitions"][0]["definition"]}"
