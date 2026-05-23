@@ -106,13 +106,20 @@ class meta_data_parser:
     def meta(self: meta_data_parser, data: Iterator[str]):
         macro: dict[str, str] = {}
         data, data2 = tee(data)
-        for line in data:
+        for line_num, line in enumerate(data):
             if line.startswith("%define"):
-                _, name, value = line.split(maxsplit=2)
-                macro[name] = value.strip('"')
-        for _ in data2:
+                try:
+                    _, name, value = line.split(maxsplit=2)
+                    macro[name] = value.strip('"')
+                except ValueError:
+                    print(
+                        f'Error occurred at line {line_num}, macro "define" does not have enough parameter'
+                    )
+        for ln, _ in enumerate(data2):
             if _.startswith("%"):
                 continue
+            if ":" not in _:
+                print(f'Error occurred at line {ln}, separator ":" expected')
             command, argument = _.split(":", maxsplit=1)
             self.data[command] += list(
                 macro.get(i, i) for i in modify[command](argument)
@@ -577,7 +584,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
         )
     if "-f" in flags or "--force" in flags:
         with open(args[1] + ".dtb", "w") as file:
-            file.write("")
+            pass
     with open(args[1] + ".dtb", "a") as file:
         file.write(input("title? ") + "\n")
         if input("meta data?") in ("yes", "y"):
@@ -589,6 +596,31 @@ def look_up(flags: list[str], *args: str) -> return_value:
         for word, definition in res.items():
             file.write(f"{definition}~{word.strip()}\n")
     print(f"Ouput was written in file {args[1]}.dtb")
+    return result
+
+
+def meta(flags: list[str], *args: str) -> return_value:
+    result: return_value = return_value(exit=False, try_again=False)
+    if not os.path.exists(args[1]):
+        print(f"Error occurred when trying to open file {args[1]}, not found.")
+    if "-c" in flags or "--check" in flags:
+        checker: meta_data_parser = meta_data_parser()
+        r: Iterator[str]
+        with open(args[1], encoding="utf-8") as file:
+            r = (i.strip() for i in file.readlines())
+        checker.meta(r)
+        return result
+    pin: int = 0
+    with open(args[1], "a+", encoding="utf-8") as file:
+        while i := file.readline():
+            if i.strip() == "[meta start]":
+                pin += file.tell()
+                file.readline()
+                pin += file.tell()
+                break
+        file.seek(pin)
+        while (inp := input("meta data >> ")) != "META_END":
+            file.write(inp + "\n")
     return result
 
 
@@ -612,6 +644,7 @@ commands: dict[str, Callable[..., return_value]] = {
     "refresh": restart,
     "rm": rm,
     "lookup": look_up,
+    "meta": meta,
 }
 alias: dict[str, str] = {}
 GLOBALS: dict[str, int] = {"chances": 10}
