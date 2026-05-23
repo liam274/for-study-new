@@ -97,12 +97,18 @@ modify: dict[str, Callable[[str], Iterator[str]]] = {
     "dismiss": basic,
     "set": basic,
     "mode": basic,
+    "define": basic,
 }
 
 
 class meta_data_parser:
     def __init__(self: meta_data_parser):
-        self.data: dict[str, list[str]] = {"dismiss": [], "set": [], "mode": []}
+        self.data: dict[str, list[str]] = {
+            "dismiss": [],
+            "set": [],
+            "mode": [],
+            "define": [],
+        }
 
     def meta(self: meta_data_parser, data: Iterator[str]):
         macro: dict[str, str] = {}
@@ -150,6 +156,9 @@ class meta_data_parser:
     def run_rule(self: meta_data_parser, data: str) -> str:
         for rule in self.data["dismiss"]:
             data = data.replace(rule, "")
+        for rule in self.data["define"]:
+            rule = rule.split("^")
+            data = data.replace(rule[0], rule[1])
         return data
 
 
