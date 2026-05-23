@@ -90,9 +90,13 @@ class StudyCompleter(Completer):
             )
 
 
+basic: Callable[[list[str]], list[str]] = lambda x: ":".join(
+    i.strip() for i in x
+).split(",,")
+
 modify: dict[str, Callable[[list[str]], list[str]]] = {
-    "dismiss": lambda x: ":".join(x).split(",,"),
-    "set": lambda x: ":".join(x).split(",,"),
+    "dismiss": basic,
+    "set": basic,
 }
 
 
@@ -116,7 +120,7 @@ class parser:
         with open(path, "r") as file:
             self.iter = (i.rstrip("\n") for i in file.readlines())
 
-    def exec(self) -> tuple[tuple[str, ...], ...]:
+    def exec(self) -> tuple[tuple[tuple[str, ...], ...], dict[str, list[str]]]:
         result: list[tuple[str, ...]] = []
         is_meta: bool = False
         metas: list[str] = []
@@ -174,11 +178,16 @@ class parser:
             if special:
                 all[0:0] = [special]
             result.append(tuple(i for i in all))
-        return tuple(result)
+        return tuple(result), meta_data.data
 
 
 def fetch(url: str, timeout: int = 10) -> list[Any]:
-    resp = requests.get(url, timeout=timeout)
+    try:
+        resp = requests.get(url, timeout=timeout)
+    except Exception as e:
+        print("Ouch! The console cannot reach the server...")
+        print(e)
+        sys.exit(-1)
     return resp.json()
 
 
@@ -201,16 +210,18 @@ def get_char(prompt: str = "") -> str:
     return getche().decode()  # type: ignore
 
 
-def parse(path: str) -> tuple[list[tuple[set[str], answer]], str]:
+def parse(
+    path: str,
+) -> tuple[tuple[list[tuple[set[str], answer]], str], dict[str, list[str]]]:
     result: list[tuple[set[str], answer]] = []
-    _ = parser(path).exec()
+    _, rules = parser(path).exec()
     for line in _[1:]:
         if len(line) < 3:
             print(
                 "Error occured when pharsing file, found too few arguments in a line",
                 file=sys.stderr,
             )
-            return result, ""
+            return (result, ""), {}
         special_char: str = line[0]  # type: ignore
         if special_char == "~":
             result.append(({line[1]}, answer(first=True, content=set(line[2:]))))
@@ -234,7 +245,7 @@ def parse(path: str) -> tuple[list[tuple[set[str], answer]], str]:
                     ),
                 )
             )
-    return result, _[0][0]
+    return (result, _[0][0]), rules
 
 
 def get_size() -> tuple[int, int]:
@@ -262,10 +273,12 @@ def study(_: list[str], *args: str) -> return_value:
             print(f"File {i} does not exist, skipping", file=sys.stderr)
     questions: dict[str, answer] = {}
     titles: list[str] = []
+    rule: dict[str, list[str]] = {}
     for i in files:
         _: list[tuple[set[str], answer]]
         title: str
-        _, title = parse(i)
+        (_, title), rule_temp = parse(i)
+        rule.update(rule_temp)
         if not title:
             print(f"File {i} is not valid, skipping", file=sys.stderr)
             continue
@@ -289,7 +302,11 @@ def study(_: list[str], *args: str) -> return_value:
         time += 1
         temp: answer = questions[i]
         sets: set[str] = temp.content
-        splitor: str = " ".join(["_"] * len("".join(sets)))
+        splitor: str = (
+            " ".join(["_"] * len("".join(sets)))
+            if "no-filling" not in rule["set"]
+            else ""
+        )
         if temp.first:
             i += " " + splitor
         else:
@@ -525,6 +542,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
         return result
     with open(args[1], encoding="utf-8") as file:
         for word in file.readlines()[1:]:
+            print(word)
             defs = fetch(DEFAULT_URL + word.strip())[0]["meanings"]
             ins: int = 0
             if len(defs) - 1:
@@ -551,9 +569,9 @@ def look_up(flags: list[str], *args: str) -> return_value:
         with open(args[1] + ".dtb", "w") as file:
             file.write("")
     with open(args[1] + ".dtb", "a") as file:
-        file.write(input("title? "))
+        file.write(input("title? ") + "\n")
         for word, definition in res.items():
-            file.write(f"{word}~{definition}\n")
+            file.write(f"{word.strip()}~{definition}\n")
     print(f"Ouput was written in file {args[1]}.dtb")
     return result
 
