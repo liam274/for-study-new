@@ -11,6 +11,7 @@ import os
 import random
 import sys
 from typing import Callable, Any, Iterator
+import requests
 
 from prompt_toolkit import prompt as input
 from dataclasses import dataclass
@@ -48,7 +49,7 @@ class return_value:
     exit: bool
 
 
-class StudyCompleter(Completer):
+class StudyCompleter(Completer):  # deepseek's job
     def __init__(self):
         # 可被补全的命令词（包含别名）
         self.cmd_list = list(commands.keys()) + list(alias.keys())
@@ -83,13 +84,13 @@ class StudyCompleter(Completer):
 
 modify: dict[str, Callable[[list[str]], list[str]]] = {
     "dismiss": lambda x: ":".join(x).split(",,"),
-    "set": lambda x: ":".join(x).split(",,")
+    "set": lambda x: ":".join(x).split(",,"),
 }
 
 
 class meta_data_parser:
     def __init__(self: meta_data_parser):
-        self.data: dict[str, list[str]] = {"dismiss": [],"set":[]}
+        self.data: dict[str, list[str]] = {"dismiss": [], "set": []}
 
     def meta(self: meta_data_parser, data: Iterator[str]):
         for _ in data:
@@ -168,6 +169,11 @@ class parser:
         return tuple(result)
 
 
+def fetch(url: str, timeout: int = 10) -> list[Any]:
+    resp = requests.get(url, timeout=timeout)
+    return resp.json()
+
+
 def clear() -> None:
     if os.name == "nt":
         subprocess.call(["cls"])
@@ -229,12 +235,12 @@ def get_size() -> tuple[int, int]:
 
 
 # main function
-def unknown(*args: str) -> return_value:
+def unknown(flags: list[str], *args: str) -> return_value:
     print("Unknown command:", args[0])
     return return_value(try_again=False, exit=False)
 
 
-def study(*args: str) -> return_value:
+def study(_: list[str], *args: str) -> return_value:
     """Study a file."""
     result: return_value = return_value(try_again=False, exit=False)
     files: list[str] = []
@@ -249,14 +255,14 @@ def study(*args: str) -> return_value:
     questions: dict[str, answer] = {}
     titles: list[str] = []
     for i in files:
-        temp: list[tuple[set[str], answer]]
+        _: list[tuple[set[str], answer]]
         title: str
-        temp, title = parse(i)
+        _, title = parse(i)
         if not title:
             print(f"File {i} is not valid, skipping", file=sys.stderr)
             continue
         titles.append(title)
-        for dic in temp:
+        for dic in _:
             for n in dic[0]:
                 questions.update({n: dic[1]})
     if not questions:
@@ -273,18 +279,20 @@ def study(*args: str) -> return_value:
         clear()
         print(title)
         time += 1
-        temp: answer=questions[i]
+        temp: answer = questions[i]
         sets: set[str] = temp.content
-        splitor: str=" ".join(["_"]*len("".join(sets)))
+        splitor: str = " ".join(["_"] * len("".join(sets)))
         if temp.first:
-            i+=" "+splitor
+            i += " " + splitor
         else:
-            i=splitor+" "+i
-        qer: str=len(f"{time}{total} ")*" "
+            i = splitor + " " + i
+        qer: str = len(f"{time}{total} ") * " "
         print(f"({time}/{total})", i)
         trying: int = GLOBALS["chances"]
         while (
-            answer := set(i.strip() for i in input(qer+">> ", history=history).split("+"))
+            answer := set(
+                i.strip() for i in input(qer + ">> ", history=history).split("+")
+            )
         ) != sets:
             if MAGIC_STRING in answer:
                 print("Magic string detected, exiting...")
@@ -308,7 +316,7 @@ def study(*args: str) -> return_value:
     return result
 
 
-def cd(*args: str) -> return_value:
+def cd(flags: list[str], *args: str) -> return_value:
     global working_dir, prompt
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
@@ -325,7 +333,7 @@ def cd(*args: str) -> return_value:
     return result
 
 
-def vim(*args: str) -> return_value:
+def vim(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
         print("No path provided")
@@ -335,12 +343,12 @@ def vim(*args: str) -> return_value:
         return result
     clear()
     print(args)
-    subprocess.call(["vim", args[1]])
+    subprocess.call(["vim", args[1], *flags])
     clear()
     return result
 
 
-def set_alias(*args: str) -> return_value:
+def set_alias(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 3:
         print("Not enough arguments provided")
@@ -349,7 +357,7 @@ def set_alias(*args: str) -> return_value:
     return result
 
 
-def mkdir(*args: str) -> return_value:
+def mkdir(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
         print("No path provided")
@@ -358,7 +366,7 @@ def mkdir(*args: str) -> return_value:
     return result
 
 
-def cp(*args: str) -> return_value:
+def cp(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
         print("Not enough arguments provided")
@@ -370,7 +378,7 @@ def cp(*args: str) -> return_value:
     return result
 
 
-def mv(*args: str) -> return_value:
+def mv(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
         print("Not enough arguments provided")
@@ -382,7 +390,7 @@ def mv(*args: str) -> return_value:
     return result
 
 
-def _help(*args: str) -> return_value:
+def _help(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) > 1:
         if args[1] in commands:
@@ -397,13 +405,13 @@ def _help(*args: str) -> return_value:
     return result
 
 
-def _clear(*args: str) -> return_value:
+def _clear(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     clear()
     return result
 
 
-def _exec(*args: str) -> return_value:
+def _exec(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
         print("No command provided")
@@ -412,7 +420,7 @@ def _exec(*args: str) -> return_value:
     return result
 
 
-def _set(*args: str) -> return_value:
+def _set(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 3:
         print("Not enough arguments provided")
@@ -424,7 +432,7 @@ def _set(*args: str) -> return_value:
     return result
 
 
-def ls(*args: str) -> return_value:
+def ls(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     for [_, dirs, files] in os.walk(os.getcwd()):
         for dir in dirs:
@@ -439,7 +447,7 @@ def ls(*args: str) -> return_value:
     return result
 
 
-def cat(*args: str) -> return_value:
+def cat(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
         print("No path provided")
@@ -455,19 +463,19 @@ def cat(*args: str) -> return_value:
     return result
 
 
-def whoami(*args: str) -> return_value:
+def whoami(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     print(f'You are "{username}", who has been studying hard!')
     return result
 
 
-def echo(*args: str) -> return_value:
+def echo(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     print(" ".join(args[1:]))
     return result
 
 
-def restart(*args: str) -> return_value:
+def restart(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     print("Restarting...")
     os.execv(sys.executable, [sys.executable] + sys.argv)
@@ -475,7 +483,7 @@ def restart(*args: str) -> return_value:
     return result
 
 
-def rm(*args: str) -> return_value:
+def rm(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
         print("No path provided")
@@ -489,6 +497,56 @@ def rm(*args: str) -> return_value:
     answer = input(f'Are you sure you want to delete file "{args[1]}"? (y/n) ')
     if answer.lower() in trues:
         os.remove(args[1])
+    return result
+
+
+DEFAULT_URL: str = "https://api.dictionaryapi.dev/api/v2/entries/en/"
+
+
+def look_up(flags: list[str], *args: str) -> return_value:
+    result = return_value(try_again=False, exit=False)
+    if not os.path.exists(args[1]) or ("-w" in flags or "--word" in flags):
+        for i, entry in enumerate(fetch(DEFAULT_URL + args[1])[0]["meanings"]):
+            print(
+                f"{i+1}. ({entry["partOfSpeech"]}) {entry["definitions"][0]["definition"]}"
+            )
+        return result
+    res: dict[str, str] = {}
+    if not os.path.exists(args[1]):
+        print(f"Error occurred when trying to read file {args[1]}, not found.")
+        return result
+    with open(args[1], encoding="utf-8") as file:
+        for word in file.readlines()[1:]:
+            defs = fetch(DEFAULT_URL + word.strip())[0]["meanings"]
+            ins: int = 0
+            if len(defs) - 1:
+                for i, entry in enumerate(defs):
+                    print(
+                        f"{i+1}. ({entry["partOfSpeech"]}) {entry["definitions"][0]["definition"]}"
+                    )
+                if not ("-a" in flags or "--auto" in flags):
+                    while (
+                        ins := (int(input("Choose one >>")) - 1)
+                        and ins < 0
+                        and ins >= len(defs)
+                    ):
+                        pass
+            else:
+                print("Found one definition only, picking the first one...")
+            res[word] = defs[ins]["definitions"][0]["definition"]
+    if os.path.exists(args[1] + ".dtb") and not ("-f" in flags or "--force" in flags):
+        print(
+            f"Error occurred when trying to write to file {args[1]}.dtb, please use -f or --force to force overwrite, or "
+            "change the name of the existed file"
+        )
+    if "-f" in flags or "--force" in flags:
+        with open(args[1] + ".dtb", "w") as file:
+            file.write("")
+    with open(args[1] + ".dtb", "a") as file:
+        file.write(input("title? "))
+        for word, definition in res.items():
+            file.write(f"{word}~{definition}\n")
+    print(f"Ouput was written in file {args[1]}.dtb")
     return result
 
 
@@ -511,6 +569,7 @@ commands: dict[str, Callable[..., return_value]] = {
     "echo": echo,
     "refresh": restart,
     "rm": rm,
+    "lookup": look_up,
 }
 alias: dict[str, str] = {}
 GLOBALS: dict[str, int] = {"chances": 10}
@@ -566,8 +625,14 @@ def executor() -> None:
             )
             command: str = pre_command[0]
             command = alias.get(command, command)
-            arguments: tuple[str, ...] = pre_command
-            value: return_value = commands.get(command, unknown)(*arguments)
+            flags: list[str] = []
+            arguments: list[str] = []
+            for i in pre_command:
+                if i[0] == "-":
+                    flags.append(i)
+                else:
+                    arguments.append(i)
+            value: return_value = commands.get(command, unknown)(flags, *arguments)
             if value.exit:
                 break
             while value.try_again:
