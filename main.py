@@ -12,7 +12,7 @@ import random
 import sys
 from typing import Callable, Any, Iterator
 import requests
-from itertools import tee
+import itertools
 
 from prompt_toolkit import prompt as input
 from dataclasses import dataclass
@@ -96,30 +96,52 @@ basic: Callable[[str], Iterator[str]] = lambda x: (i.strip() for i in x.split(",
 modify: dict[str, Callable[[str], Iterator[str]]] = {
     "dismiss": basic,
     "set": basic,
+    "mode": basic,
 }
 
 
 class meta_data_parser:
     def __init__(self: meta_data_parser):
-        self.data: dict[str, list[str]] = {"dismiss": [], "set": []}
+        self.data: dict[str, list[str]] = {"dismiss": [], "set": [], "mode": []}
 
     def meta(self: meta_data_parser, data: Iterator[str]):
         macro: dict[str, str] = {}
-        data, data2 = tee(data)
+        data, data2 = itertools.tee(data)
         for line_num, line in enumerate(data):
-            if line.startswith("%define"):
-                try:
+            if line[0] != "%":
+                continue
+            if line[1] == "%":  # comment
+                continue
+            try:
+                if line.startswith("%define"):
                     _, name, value = line.split(maxsplit=2)
                     macro[name] = value.strip('"')
-                except ValueError:
-                    print(
-                        f'Error occurred at line {line_num}, macro "define" does not have enough parameter'
-                    )
+                elif line.startswith("%include"):
+                    _, name = line.split(maxsplit=2)
+                    if not os.path.exists(name):
+                        print("Error occurred when trying to open file")
+                    s: list[str] = []
+                    meta: bool = False
+                    with open(name, encoding="utf-8") as file:
+                        for i in file.readlines():
+                            i = i.strip()
+                            if i == "[meta start]":
+                                meta = True
+                            elif i == "[meta end]":
+                                meta = False
+                            if meta:
+                                s.append(i)
+                    data2 = itertools.chain(data2, (i for i in s))
+            except ValueError:
+                print(
+                    f'Error occurred at line {line_num}, macro "{line.split(" ")[0]}" does not have enough parameter'
+                )
         for ln, _ in enumerate(data2):
             if _.startswith("%"):
                 continue
             if ":" not in _:
                 print(f'Error occurred at line {ln}, separator ":" expected')
+                return
             command, argument = _.split(":", maxsplit=1)
             self.data[command] += list(
                 macro.get(i, i) for i in modify[command](argument)
@@ -133,7 +155,7 @@ class meta_data_parser:
 
 class parser:
     def __init__(self: parser, path: str):
-        with open(path, "r") as file:
+        with open(path, "r", encoding="utf-8") as file:
             self.iter = (i.rstrip("\n") for i in file.readlines())
 
     def exec(self) -> tuple[tuple[tuple[str, ...], ...], dict[str, list[str]]]:
@@ -313,6 +335,11 @@ def study(_: list[str], *args: str) -> return_value:
     title: str = " & ".join(titles)
     total: int = len(question_list)
     history = InMemoryHistory()
+    if len(set(rule["mode"])) - 1:
+        print(
+            f"Error occurred when trying to study with {{{", ".join(args)}}}, found multiple mode. You may only study in one mode at a time."
+        )
+        return result
     for i in question_list:
         clear()
         print(title)
@@ -500,7 +527,7 @@ def cat(flags: list[str], *args: str) -> return_value:
     if not os.path.isfile(args[1]):
         print(f"{args[1]} does not exist")
         return result
-    with open(args[1], "r") as file:
+    with open(args[1], "r", encoding="utf-8") as file:
         print(file.read())
     return result
 
@@ -583,9 +610,9 @@ def look_up(flags: list[str], *args: str) -> return_value:
             "change the name of the existed file"
         )
     if "-f" in flags or "--force" in flags:
-        with open(args[1] + ".dtb", "w") as file:
+        with open(args[1] + ".dtb", "w", encoding="utf-8") as file:
             pass
-    with open(args[1] + ".dtb", "a") as file:
+    with open(args[1] + ".dtb", "a", encoding="utf-8") as file:
         file.write(input("title? ") + "\n")
         if input("meta data?") in ("yes", "y"):
             file.write("[meta start]")
