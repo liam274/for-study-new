@@ -605,17 +605,23 @@ def meta(flags: list[str], *args: str) -> return_value:
         print(f"Error occurred when trying to open file {args[1]}, not found.")
     if "-c" in flags or "--check" in flags:
         checker: meta_data_parser = meta_data_parser()
-        r: Iterator[str]
+        r: list[str] = []
+        meta: bool = False
         with open(args[1], encoding="utf-8") as file:
-            r = (i.strip() for i in file.readlines())
-        checker.meta(r)
+            for i in file.readlines():
+                i = i.strip()
+                if i == "[meta start]":
+                    meta = True
+                elif i == "[meta end]":
+                    meta = False
+                if meta:
+                    r.append(i)
+        checker.meta(i for i in r)
         return result
     pin: int = 0
     with open(args[1], "a+", encoding="utf-8") as file:
         while i := file.readline():
             if i.strip() == "[meta start]":
-                pin += file.tell()
-                file.readline()
                 pin += file.tell()
                 break
         file.seek(pin)
