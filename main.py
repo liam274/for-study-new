@@ -295,7 +295,8 @@ class parser:
                 all.append("".join(temp))
             if special:
                 all[0:0] = [special]
-            result.append((tuple(i for i in all), rule))
+            if ("ignore",) not in rule["set"]:
+                result.append((tuple(i for i in all), rule))
             rule.clear()
         return tuple(result), meta_data.data
 
@@ -473,7 +474,10 @@ def study(flags: list[str], *args: str) -> return_value:
     done_question: int = 0
     most_question: str = ""
     most_time: float = 0
+    break_through: bool = False
     for i in question_list:
+        if break_through:
+            break
         if DO_WRONG and i not in flags:
             continue
         clear()
@@ -542,7 +546,7 @@ def study(flags: list[str], *args: str) -> return_value:
                     "Are you playing on something else? Go either play, or "
                     f"study! Don't PRETEND to study. You've used too much time ({end} sec)"
                 )
-                break
+                break_through = True
             time_module.sleep(0.1)
             continue
         end: float = time_module.time() - start
