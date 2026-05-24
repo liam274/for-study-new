@@ -404,7 +404,7 @@ def study(_: list[str], *args: str) -> return_value:
         sets: set[str] = temp.content
         splitor: str = (
             " ".join(["_"] * len("".join(sets)))
-            if ("no-filling",) not in rule["set"]
+            if ("do-filling",) in rule["set"]
             else ""
         )
         if temp.first:
