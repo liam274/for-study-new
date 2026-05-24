@@ -512,7 +512,9 @@ def study(flags: list[str], *args: str) -> return_value:
             i = splitor + " " + i
         qer: str = (len(f"{time}{total} ")) * " " + ">> "
         print(f"({time}/{total})", i)
-        trying: int = safe_int(specific_rules.get("chance", set()).pop()[0]) or chances
+        trying: int = (
+            safe_int(specific_rules.get("chance", set("0")).pop()[0]) or chances
+        )
         start: float = time_module.time()
         while (
             answer := set(i.strip() for i in input(qer, history=history).split("+"))
@@ -530,7 +532,7 @@ def study(flags: list[str], *args: str) -> return_value:
             trying -= 1
             print("You're wrong! Please try again.")
             if (end := time_module.time() - start) > min(
-                safe_int(specific_rules.get("max_time", set()).pop()[0])
+                safe_int(specific_rules.get("max_time", set("0")).pop()[0])
                 or GLOBALS["max_time"],
                 3600,
             ):
@@ -553,7 +555,7 @@ def study(flags: list[str], *args: str) -> return_value:
                 most_time = end
             if end > (
                 min(
-                    safe_int(specific_rules.get("max_time", set()).pop()[0])
+                    safe_int(specific_rules.get("max_time", set("0")).pop()[0])
                     or GLOBALS["max_time"],
                     3600,
                 )
