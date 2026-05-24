@@ -17,7 +17,7 @@ from collections import deque
 import datetime
 
 from prompt_toolkit import prompt as input
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from getch import getche  # type: ignore
 import subprocess
 import shutil
@@ -53,7 +53,7 @@ class answer:
 class return_value:
     try_again: bool
     exit: bool
-    flag: list[str] = []
+    flag: list[str] = field(default_factory=lambda: [])
 
 
 class StudyCompleter(Completer):
