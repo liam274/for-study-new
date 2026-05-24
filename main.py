@@ -688,11 +688,11 @@ def look_up(flags: list[str], *args: str) -> return_value:
             pass
     with open(args[1] + ".dtb", "a", encoding="utf-8") as file:
         file.write(input("title? ") + "\n")
-        if input("meta data?") in ("yes", "y"):
+        if input("write meta data?") in trues:
             file.write("[meta start]")
             inp: str
             while (inp := input("meta data >> ")) != "END META":
-                file.write(inp)
+                file.write(inp + "\n")
             file.write("[meta end]")
         for word, definition in res.items():
             file.write(f"{definition}~{word.strip()}\n")
