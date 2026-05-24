@@ -47,7 +47,7 @@ PATH: str = os.getcwd()
 class answer:
     first: bool
     content: set[str]
-    rules: dict[str, tuple[str, ...]]
+    rules: dict[str, set[tuple[str, ...]]]
 
 
 @dataclass
@@ -229,15 +229,15 @@ class parser:
     def exec(
         self,
     ) -> tuple[
-        tuple[tuple[tuple[str, ...], dict[str, tuple[str, ...]]], ...],
+        tuple[tuple[tuple[str, ...], dict[str, set[tuple[str, ...]]]], ...],
         dict[str, list[tuple[str, ...]]],
     ]:
-        result: list[tuple[tuple[str, ...], dict[str, tuple[str, ...]]]] = []
+        result: list[tuple[tuple[str, ...], dict[str, set[tuple[str, ...]]]]] = []
         is_meta: bool = False
         metas: list[str] = []
         meta_data: meta_data_parser = meta_data_parser()
         data: list[str] = []
-        rule: dict[str, tuple[str, ...]] = {}
+        rule: dict[str, set[tuple[str, ...]]] = {}
         for i in self.iter:
             if is_meta:
                 if i == "[meta end]":
@@ -252,12 +252,9 @@ class parser:
             data.append(i)
         for i in meta_data.run_rule("\n".join(data)).split("\n"):
             if i[0] == "@":
-                _ = i.split(" ")
-                rule.update(
-                    {
-                        _[0].lstrip("@"): tuple(_[1:])
-                        + rule.get(_[0].lstrip("@"), tuple())
-                    }
+                _: list[str] = i.split(" ")
+                rule[_[0].lstrip("@")] = set(tuple(i.split("^")) for i in _[1:]).union(
+                    rule.get(_[0].lstrip("@"), set())
                 )
                 continue
             all: list[str] = []
@@ -401,6 +398,20 @@ def get_size() -> tuple[int, int]:
     return obj.columns, obj.lines
 
 
+def conflict(data: str) -> str:  # mvp
+    if data == "do-filling":
+        return "no-filling"
+    if data == "no-filling":
+        return "do-filling"
+    return ""
+
+
+def safe_int(data: str) -> int:
+    if data.isdigit():
+        return int(data)
+    return 0
+
+
 # main function
 def unknown(flags: list[str], *args: str) -> return_value:
     print("Unknown command:", args[0])
@@ -470,13 +481,20 @@ def study(flags: list[str], *args: str) -> return_value:
         time += 1
         temp: answer = questions[i]
         sets: set[str] = temp.content
-        specific_rules: dict[str, tuple[str, ...]] = temp.rules
+        specific_rules: dict[str, set[tuple[str, ...]]] = {}
+        for name, rl in temp.rules.items():
+            tempie: set[tuple[str, ...]] = rule.get(name, set())
+            for r in rl:
+                for item in tempie:
+                    if conflict("^".join(r)) in item:
+                        tempie.remove(item)
+            specific_rules[name] = rl.union(tempie)
         if "ignore" in specific_rules.get("set", tuple()):
             continue
         done_question += 1
         splitor: str = (
             " ".join(["_"] * len("".join(sets)))
-            if ("do-filling",) in rule["set"]
+            if ("do-filling",) in specific_rules["set"]
             else ""
         )
         if MODE == "tts":
@@ -490,7 +508,7 @@ def study(flags: list[str], *args: str) -> return_value:
             i = splitor + " " + i
         qer: str = (len(f"{time}{total} ")) * " " + ">> "
         print(f"({time}/{total})", i)
-        trying: int = chances
+        trying: int = safe_int(specific_rules["chance"].pop()[0]) or chances
         start: float = time_module.time()
         while (
             answer := set(i.strip() for i in input(qer, history=history).split("+"))
@@ -517,12 +535,26 @@ def study(flags: list[str], *args: str) -> return_value:
             if end > most_time:
                 most_question = i
                 most_time = end
+            if end > (
+                safe_int(specific_rules["max_time"].pop()[0]) or GLOBALS["max_time"]
+            ):
+                print(
+                    "Are you playing on something else? Go either play, or "
+                    f"study! Don't PRETEND to study. You've used too much time ({end} sec)"
+                )
+                break
             time_module.sleep(0.1)
             continue
         end: float = time_module.time() - start
         if end > most_time:
             most_question = i
             most_time = end
+        if end > (safe_int(specific_rules["max_time"].pop()[0]) or GLOBALS["max_time"]):
+            print(
+                "Are you playing on something else? Go either play, or "
+                f"study! Don't PRETEND to study. You've used too much time ({end} sec)"
+            )
+            break
         status_list.add((i, "~".join(sets), trying))
     clear()
     print("Study stat: ")
@@ -956,8 +988,8 @@ commands: dict[str, Callable[..., return_value]] = {
     "bash": bash,
 }
 alias: dict[str, str] = {}
-GLOBALS: dict[str, int] = {"chances": 10}
-DEFAULTS: dict[str, int] = {"chances": 10}
+GLOBALS: dict[str, int] = {"chances": 10, "max_time": 300}
+DEFAULTS: dict[str, int] = {"chances": 10, "max_time": 300}
 username: str = os.getenv("USER", "student")
 BOLD = "\033[1m"
 RESET = "\033[0m"
