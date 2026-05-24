@@ -1,2 +1,6 @@
+prompt-toolkit
+getch
 pyttsx3
 pulsectl
+ubelt
+requests
