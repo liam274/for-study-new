@@ -612,19 +612,20 @@ def rm(flags: list[str], *args: str) -> return_value:
     if len(args) < 2:
         print("No path provided")
         return result
-    if os.path.isdir(args[1]):
-        print(f"{args[1]} is a directory")
-        return result
-    if not os.path.isfile(args[1]):
-        print(f"{args[1]} does not exist")
-        return result
-    answer = (
-        input(f'Are you sure you want to delete file "{args[1]}"? (y/n) ')
-        if "-f" not in flags and "--force" not in flags
-        else trues[0]
-    )
-    if answer.lower() in trues:
-        os.remove(args[1])
+    for path in args[1:]:
+        if os.path.isdir(path):
+            print(f"{path} is a directory")
+            return result
+        if not os.path.isfile(path):
+            print(f"{path} does not exist")
+            return result
+        answer = (
+            input(f'Are you sure you want to delete file "{path}"? (y/n) ')
+            if "-f" not in flags and "--force" not in flags
+            else trues[0]
+        )
+        if answer.lower() in trues:
+            os.remove(args[1])
     return result
 
 
