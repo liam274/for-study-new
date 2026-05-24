@@ -438,6 +438,8 @@ def study(_: list[str], *args: str) -> return_value:
     for i in wrong_list:
         if i[1] < GLOBALS["chances"]:
             print(f"{i[0]}[{i[1]}]")
+    if input("try again? ").strip() in ("y", "yes"):
+        return return_value(exit=False, try_again=True)
     return result
 
 
