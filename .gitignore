@@ -3,3 +3,4 @@
 *.dtbs
 *.txt
 !README.md
+!requirements.txt

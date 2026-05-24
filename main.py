@@ -14,6 +14,7 @@ from typing import Callable, Any, Iterator
 import requests
 import itertools
 from collections import deque
+import datetime
 
 from prompt_toolkit import prompt as input
 from dataclasses import dataclass
@@ -29,6 +30,8 @@ from prompt_toolkit.completion import (
     CompleteEvent,
 )
 from prompt_toolkit.document import Document
+import pyttsx3  # type: ignore
+import pulsectl  # type: ignore
 
 # from rich import print
 from ubelt import shrinkuser  # type: ignore
@@ -280,7 +283,7 @@ def fetch(url: str, timeout: int = 10) -> list[Any]:
         resp = requests.get(url, timeout=timeout)
     except Exception as e:
         print("Ouch! The console cannot reach the server...")
-        print(e)
+        log(f'Fetch for url "{url}" failed: {e}', "ERROR")
         sys.exit(-1)
     return resp.json()
 
@@ -304,18 +307,30 @@ def get_char(prompt: str = "") -> str:
     return getche().decode()  # type: ignore
 
 
+def log(content: str, level: str):
+    if not os.path.isdir("logs/"):
+        os.mkdir("logs/")
+    with open(f"logs/{datetime.datetime.today()}.log", "a+", encoding="utf-8") as file:
+        file.write(f"{datetime.datetime.now()} {level} {content}")
+
+
+def is_volume_on():
+    """check if the computer's volume is not muted (on)"""
+    try:
+        with pulsectl.Pulse("volume-check") as pulse:
+            sink = pulse.get_sink_by_name(pulse.server_info().default_sink_name)  # type: ignore
+            return not sink.mute  # type: ignore
+    except Exception as e:
+        log(f"is_volume_on failed: {e}", "WARN")
+        return True
+
+
 def parse(
     path: str,
 ) -> tuple[tuple[list[tuple[set[str], answer]], str], dict[str, list[tuple[str, ...]]]]:
     result: list[tuple[set[str], answer]] = []
     _, rules = parser(path).exec()
     for line in _[1:]:
-        if len(line) < 3:
-            print(
-                "Error occured when pharsing file, found too few arguments in a line",
-                file=sys.stderr,
-            )
-            return (result, ""), {}
         special_char: str = line[0]  # type: ignore
         if special_char == "~":
             result.append(({line[1]}, answer(first=True, content=set(line[2:]))))
@@ -339,6 +354,8 @@ def parse(
                     ),
                 )
             )
+        else:
+            result.append(({line[0]}, answer(first=True, content={line[0]})))
     return (result, _[0][0]), rules
 
 
@@ -391,11 +408,19 @@ def study(_: list[str], *args: str) -> return_value:
     title: str = " & ".join(titles)
     total: int = len(question_list)
     history = InMemoryHistory()
-    if len(set(rule["mode"])) > 1:
+    rule["mode"] = set(rule["mode"])
+    if len(rule["mode"]) > 1:
         print(
             f"Error occurred when trying to study with {{{", ".join(args)}}}, found multiple mode. You may only study in one mode at a time."
         )
         return result
+    MODE: str = rule["mode"].pop()[0]
+    if MODE == "tts":
+        while not is_volume_on():
+            print("\rPlease turn on the volume", end="")
+            time_module.sleep(1)
+            print("\r\033[K", end="")
+            time_module.sleep(1)
     for i in question_list:
         clear()
         print(title)
@@ -407,17 +432,19 @@ def study(_: list[str], *args: str) -> return_value:
             if ("do-filling",) in rule["set"]
             else ""
         )
+        if MODE == "tts":
+            TTS_ENGINE.say(i)
+            TTS_ENGINE.runAndWait()
+            i = ""
         if temp.first:
             i += " " + splitor
         else:
             i = splitor + " " + i
-        qer: str = (len(f"{time}{total} ")) * " "
+        qer: str = (len(f"{time}{total} ")) * " " + ">> "
         print(f"({time}/{total})", i)
         trying: int = GLOBALS["chances"]
         while (
-            answer := set(
-                i.strip() for i in input(qer + ">> ", history=history).split("+")
-            )
+            answer := set(i.strip() for i in input(qer, history=history).split("+"))
         ) != sets:
             if MAGIC_STRING in answer:
                 print("Magic string detected, exiting...")
@@ -796,6 +823,10 @@ YELLOW = "\033[33m"
 BLUE = "\033[34m"
 working_dir: str = shrinkuser(os.getcwd())
 prompt = f"{BOLD}{GREEN}{username}{RESET}{BOLD}:{BLUE}{working_dir}{YELLOW} $ {RESET}"
+
+TTS_ENGINE: pyttsx3.Engine = pyttsx3.init()  # type: ignore
+TTS_ENGINE.setProperty("rate", 150)  # type: ignore
+TTS_ENGINE.setProperty("volume", 0.9)  # type: ignore
 
 
 def compile(data: str) -> tuple[str, ...]:
