@@ -295,7 +295,7 @@ class parser:
                 all.append("".join(temp))
             if special:
                 all[0:0] = [special]
-            if ("ignore",) not in rule["set"]:
+            if ("ignore",) not in rule.get("set", set()):
                 result.append((tuple(i for i in all), rule))
             rule.clear()
         return tuple(result), meta_data.data
