@@ -479,6 +479,10 @@ def study(flags: list[str], *args: str) -> return_value:
                 most_time = end
             time_module.sleep(0.1)
             continue
+        end: float = time_module.time() - start
+        if end > most_time:
+            most_question = i
+            most_time = end
         status_list.add((i, "~".join(sets), trying))
     clear()
     print("Study stat: ")
