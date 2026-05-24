@@ -837,6 +837,22 @@ def merge(flags: list[str], *args: str) -> return_value:
     return result
 
 
+def info(flags: list[str], *args: str) -> return_value:
+    result: return_value = return_value(exit=False, try_again=False)
+    for file in args[1:]:
+        if not os.path.isfile(file):
+            continue
+        (problem, title), rules = parse(file)
+        print("-" * shutil.get_terminal_size().columns)
+        print(f"File name: {file}")
+        print(f"Dtb title: {title}")
+        print(f"Question number: {len(problem)}")
+        print("Meta data: ")
+        for rule, content in rules.items():
+            print(f"\t{rule}: {",,".join("^".join(i) for i in content)}")
+    return result
+
+
 commands: dict[str, Callable[..., return_value]] = {
     "study": study,
     "cd": cd,
@@ -859,6 +875,7 @@ commands: dict[str, Callable[..., return_value]] = {
     "lookup": look_up,
     "meta": meta,
     "merge": merge,
+    "info": info,
 }
 alias: dict[str, str] = {}
 GLOBALS: dict[str, int] = {"chances": 10}
