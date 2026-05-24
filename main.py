@@ -651,7 +651,10 @@ def look_up(flags: list[str], *args: str) -> return_value:
     with open(args[1], encoding="utf-8") as file:
         for word in file.readlines()[1:]:
             print(word)
-            defs = fetch(DEFAULT_URL + word.strip())[0]["meanings"]
+            result_ = fetch(DEFAULT_URL + word.strip())
+            if len(result_) == 0:
+                continue
+            defs = result_[0]["meanings"]
             ins: int = 0
             while 1:
                 defs = fetch(DEFAULT_URL + word.strip())[0]["meanings"]
