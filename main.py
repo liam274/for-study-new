@@ -36,7 +36,7 @@ import time as time_module
 
 SPECIAL_CHARS: str = "~:"
 MAGIC_STRING: str = "35c4p3d"
-trues: set[str] = {"y", "yes", "true"}
+trues: tuple[str, ...] = ("y", "yes", "true")
 PATH: str = os.getcwd()
 
 
@@ -438,7 +438,7 @@ def study(_: list[str], *args: str) -> return_value:
     for i in wrong_list:
         if i[1] < GLOBALS["chances"]:
             print(f"{i[0]}[{i[1]}]")
-    if input("try again? ").strip() in ("y", "yes"):
+    if input("try again? ").strip().lower() in trues:
         return return_value(exit=False, try_again=True)
     return result
 
@@ -618,7 +618,11 @@ def rm(flags: list[str], *args: str) -> return_value:
     if not os.path.isfile(args[1]):
         print(f"{args[1]} does not exist")
         return result
-    answer = input(f'Are you sure you want to delete file "{args[1]}"? (y/n) ')
+    answer = (
+        input(f'Are you sure you want to delete file "{args[1]}"? (y/n) ')
+        if "-f" not in flags and "--force" not in flags
+        else trues[0]
+    )
     if answer.lower() in trues:
         os.remove(args[1])
     return result
@@ -741,7 +745,7 @@ def merge(flags: list[str], *args: str) -> return_value:
     path: str = input("output file >> ")
     if os.path.exists(path):
         if (
-            input("File overlapped. Clear?").strip() in ("y", "yes")
+            input("File overlapped. Clear?").strip().lower() in trues
             or "-f" in flags
             or "--force" in flags
         ):
