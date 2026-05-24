@@ -628,10 +628,14 @@ DEFAULT_URL: str = "https://api.dictionaryapi.dev/api/v2/entries/en/"
 def look_up(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if not os.path.exists(args[1]) or ("-w" in flags or "--word" in flags):
-        for i, entry in enumerate(fetch(DEFAULT_URL + args[1])[0]["meanings"]):
-            print(
-                f"{i+1}. ({entry["partOfSpeech"]}) {entry["definitions"][0]["definition"]}"
-            )
+        for word in args[1:]:
+            defs = fetch(DEFAULT_URL + word)[0]["meanings"]
+            if len(defs) == 0:
+                print(f'word "{word}" not found')
+            for i, entry in enumerate(defs):
+                print(
+                    f"{i+1}. ({entry["partOfSpeech"]}) {entry["definitions"][0]["definition"]}"
+                )
         return result
     res: dict[str, str] = {}
     if not os.path.exists(args[1]):
@@ -642,20 +646,30 @@ def look_up(flags: list[str], *args: str) -> return_value:
             print(word)
             defs = fetch(DEFAULT_URL + word.strip())[0]["meanings"]
             ins: int = 0
-            if len(defs) > 1:
-                for i, entry in enumerate(defs):
-                    print(
-                        f"{i+1}. ({entry["partOfSpeech"]}) {entry["definitions"][0]["definition"]}"
-                    )
-                if not ("-a" in flags or "--auto" in flags):
-                    while (
-                        ins := (int(input("Choose one >>")) - 1)
-                        and ins < 0
-                        and ins >= len(defs)
-                    ):
-                        pass
-            else:
-                print("Found one definition only, picking the first one...")
+            while 1:
+                defs = fetch(DEFAULT_URL + word.strip())[0]["meanings"]
+                ins: int = 0
+                if len(defs) > 1:
+                    for i, entry in enumerate(defs):
+                        print(
+                            f"{i+1}. ({entry["partOfSpeech"]}) {entry["definitions"][0]["definition"]}"
+                        )
+                    if not ("-a" in flags or "--auto" in flags):
+                        while (
+                            ins := (int(input("Choose one >>")) - 1)
+                            and ins < 0
+                            and ins >= len(defs)
+                        ):
+                            pass
+                elif len(defs):
+                    print("Found one definition only, picking the first one...")
+                else:
+                    print(f'Word "{word}" not found.')
+                    word = input("do you mean >> ")
+                    if word == MAGIC_STRING:
+                        break
+                    continue
+                break
             res[word] = defs[ins]["definitions"][0]["definition"]
     if os.path.exists(args[1] + ".dtb") and not ("-f" in flags or "--force" in flags):
         print(
