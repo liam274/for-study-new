@@ -132,6 +132,7 @@ modify: dict[str, Callable[[str], Iterator[str]]] = {
     "set": basic,
     "mode": basic,
     "define": basic,
+    "include": basic,
 }
 
 
@@ -142,6 +143,7 @@ class meta_data_parser:
             "set": [],
             "mode": [],
             "define": [],
+            "include": [],
         }
 
     def meta(self: meta_data_parser, data: Iterator[str]):
@@ -208,6 +210,13 @@ class meta_data_parser:
             data = data.replace(rule[0], "")
         for rule in self.data["define"]:
             data = data.replace(rule[0], rule[1])
+        for rule, *_ in self.data["include"]:
+            if os.path.isfile(rule):
+                with open(rule, encoding="utf-8") as file:
+                    l = file.readlines()
+                    if len(l) != 0:
+                        d = data.split("\n") + list(i.strip() for i in l[1:])
+                        data = "\n".join([(d[0][:-1] + " & " + l[0]).strip()] + d[1:])
         return data
 
 
@@ -304,8 +313,10 @@ def default(value: str, default_value: int) -> int:
 
 
 def getchar(prompt: str = "") -> str:
-    print(prompt, end="")
-    return getche().decode()  # type: ignore
+    print(prompt, end="", flush=True)
+    g = getche()  # type: ignore
+    print()
+    return g  # type: ignore
 
 
 def log(content: str, level: str):
@@ -412,7 +423,7 @@ def study(flags: list[str], *args: str) -> return_value:
             f"Error occurred when trying to study with {{{", ".join(args)}}}, found multiple mode. You may only study in one mode at a time."
         )
         return result
-    MODE: str = rule["mode"].pop()[0]
+    MODE: str = rule["mode"].pop()[0] if rule["mode"] else ""
     if MODE == "tts":
         while not is_volume_on():
             print("\rPlease turn on the volume", end="")
@@ -441,6 +452,7 @@ def study(flags: list[str], *args: str) -> return_value:
             else ""
         )
         if MODE == "tts":
+            getche("Press any key to listen >>")
             TTS_ENGINE.say(i)
             TTS_ENGINE.runAndWait()
             i = ""
