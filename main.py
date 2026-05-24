@@ -47,6 +47,7 @@ PATH: str = os.getcwd()
 class answer:
     first: bool
     content: set[str]
+    rules: dict[str, tuple[str, ...]]
 
 
 @dataclass
@@ -227,12 +228,16 @@ class parser:
 
     def exec(
         self,
-    ) -> tuple[tuple[tuple[str, ...], ...], dict[str, list[tuple[str, ...]]]]:
-        result: list[tuple[str, ...]] = []
+    ) -> tuple[
+        tuple[tuple[tuple[str, ...], dict[str, tuple[str, ...]]], ...],
+        dict[str, list[tuple[str, ...]]],
+    ]:
+        result: list[tuple[tuple[str, ...], dict[str, tuple[str, ...]]]] = []
         is_meta: bool = False
         metas: list[str] = []
         meta_data: meta_data_parser = meta_data_parser()
         data: list[str] = []
+        rule: dict[str, tuple[str, ...]] = {}
         for i in self.iter:
             if is_meta:
                 if i == "[meta end]":
@@ -246,6 +251,15 @@ class parser:
                 continue
             data.append(i)
         for i in meta_data.run_rule("\n".join(data)).split("\n"):
+            if i[0] == "@":
+                _ = i.split(" ")
+                rule.update(
+                    {
+                        _[0].lstrip("@"): tuple(_[1:])
+                        + rule.get(_[0].lstrip("@"), tuple())
+                    }
+                )
+                continue
             all: list[str] = []
             temp: list[str] = []
             special: str = ""
@@ -284,7 +298,8 @@ class parser:
                 all.append("".join(temp))
             if special:
                 all[0:0] = [special]
-            result.append(tuple(i for i in all))
+            result.append((tuple(i for i in all), rule))
+            rule.clear()
         return tuple(result), meta_data.data
 
 
@@ -342,19 +357,27 @@ def parse(
 ) -> tuple[tuple[list[tuple[set[str], answer]], str], dict[str, list[tuple[str, ...]]]]:
     result: list[tuple[set[str], answer]] = []
     _, rules = parser(path).exec()
-    for line in _[1:]:
+    for line, rl in _[1:]:
         special_char: str = line[0]  # type: ignore
         if special_char == "~":
-            result.append(({line[1]}, answer(first=True, content=set(line[2:]))))
+            result.append(
+                ({line[1]}, answer(first=True, content=set(line[2:]), rules=rl))
+            )
         elif special_char == ":":
-            result.append(({line[1]}, answer(first=True, content=set(line[2:]))))
-            result.append((set(line[2:]), answer(first=False, content={line[1]})))
+            result.append(
+                ({line[1]}, answer(first=True, content=set(line[2:]), rules=rl))
+            )
+            result.append(
+                (set(line[2:]), answer(first=False, content={line[1]}, rules=rl))
+            )
         elif special_char.startswith("-("):
             result.append(
                 (
                     {line[1] + special_char},
                     answer(
-                        first=True, content=set(i.strip() for i in line[2].split("+"))
+                        first=True,
+                        content=set(i.strip() for i in line[2].split("+")),
+                        rules=rl,
                     ),
                 )
             )
@@ -362,13 +385,15 @@ def parse(
                 (
                     {special_char + line[2]},
                     answer(
-                        first=False, content=set(i.strip() for i in line[1].split("+"))
+                        first=False,
+                        content=set(i.strip() for i in line[1].split("+")),
+                        rules=rl,
                     ),
                 )
             )
         else:
-            result.append(({line[0]}, answer(first=True, content={line[0]})))
-    return (result, _[0][0]), rules
+            result.append(({line[0]}, answer(first=True, content={line[0]}, rules=rl)))
+    return (result, _[0][0][0]), rules
 
 
 def get_size() -> tuple[int, int]:
@@ -440,12 +465,15 @@ def study(flags: list[str], *args: str) -> return_value:
     for i in question_list:
         if DO_WRONG and i not in flags:
             continue
-        done_question += 1
         clear()
         print(title)
         time += 1
         temp: answer = questions[i]
         sets: set[str] = temp.content
+        specific_rules: dict[str, tuple[str, ...]] = temp.rules
+        if "ignore" in specific_rules.get("set", tuple()):
+            continue
+        done_question += 1
         splitor: str = (
             " ".join(["_"] * len("".join(sets)))
             if ("do-filling",) in rule["set"]
