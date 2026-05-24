@@ -746,13 +746,14 @@ def merge(flags: list[str], *args: str) -> return_value:
     path: str = input("output file >> ")
     if os.path.exists(path):
         if (
-            input("File overlapped. Clear?").strip().lower() in trues
+            input("File overlapped. Clear? ").strip().lower() in trues
             or "-f" in flags
             or "--force" in flags
         ):
             with open(path, "w"):
                 pass
     with open(path, "a+", encoding="utf-8") as file:
+        file.write(input("title? ").strip() + "\n")
         for line in it:
             file.write(line)
     return result
