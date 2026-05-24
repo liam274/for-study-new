@@ -850,7 +850,7 @@ def executor() -> None:
             if value.exit:
                 break
             while value.try_again:
-                value = commands.get(command, unknown)(*arguments)
+                value = commands.get(command, unknown)(flags, *arguments)
                 if value.exit:
                     break
             else:
