@@ -726,6 +726,33 @@ def meta(flags: list[str], *args: str) -> return_value:
     return result
 
 
+def merge(flags: list[str], *args: str) -> return_value:
+    """merge multiple study dtbs"""
+    result: return_value = return_value(exit=False, try_again=False)
+    it: Iterator[str] = None  # type: ignore
+    for file_name in args[1:]:
+        if not os.path.exists(file_name):
+            print(f"file {file_name} not found, skipping...")
+        with open(file_name, encoding="utf-8") as file:
+            if it is None:  # type: ignore
+                it = (i for i in file.readlines()[1:])
+            else:
+                it = itertools.chain(it, (i for i in file.readlines()[1:]))
+    path: str = input("output file >> ")
+    if os.path.exists(path):
+        if (
+            input("File overlapped. Clear?").strip() in ("y", "yes")
+            or "-f" in flags
+            or "--force" in flags
+        ):
+            with open(path, "w"):
+                pass
+    with open(path, "a+", encoding="utf-8") as file:
+        for line in it:
+            file.write(line)
+    return result
+
+
 commands: dict[str, Callable[..., return_value]] = {
     "study": study,
     "cd": cd,
@@ -747,6 +774,7 @@ commands: dict[str, Callable[..., return_value]] = {
     "rm": rm,
     "lookup": look_up,
     "meta": meta,
+    "merge": merge,
 }
 alias: dict[str, str] = {}
 GLOBALS: dict[str, int] = {"chances": 10}
