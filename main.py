@@ -540,7 +540,11 @@ def study(flags: list[str], *args: str) -> return_value:
                 most_question = i
                 most_time = end
             if end > (
-                safe_int(specific_rules["max_time"].pop()[0]) or GLOBALS["max_time"]
+                min(
+                    safe_int(specific_rules["max_time"].pop()[0])
+                    or GLOBALS["max_time"],
+                    3600,
+                )
             ):
                 print(
                     "Are you playing on something else? Go either play, or "
@@ -553,7 +557,9 @@ def study(flags: list[str], *args: str) -> return_value:
         if end > most_time:
             most_question = i
             most_time = end
-        if end > (safe_int(specific_rules["max_time"].pop()[0]) or GLOBALS["max_time"]):
+        if end > min(
+            safe_int(specific_rules["max_time"].pop()[0]) or GLOBALS["max_time"], 3600
+        ):
             print(
                 "Are you playing on something else? Go either play, or "
                 f"study! Don't PRETEND to study. You've used too much time ({end} sec)"
