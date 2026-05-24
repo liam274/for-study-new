@@ -53,6 +53,7 @@ class answer:
 class return_value:
     try_again: bool
     exit: bool
+    flag: list[str] = []
 
 
 class StudyCompleter(Completer):
@@ -302,7 +303,7 @@ def default(value: str, default_value: int) -> int:
         return default_value
 
 
-def get_char(prompt: str = "") -> str:
+def getchar(prompt: str = "") -> str:
     print(prompt, end="")
     return getche().decode()  # type: ignore
 
@@ -370,15 +371,12 @@ def unknown(flags: list[str], *args: str) -> return_value:
     return return_value(try_again=False, exit=False)
 
 
-def study(_: list[str], *args: str) -> return_value:
+def study(flags: list[str], *args: str) -> return_value:
     """Study a file."""
     result: return_value = return_value(try_again=False, exit=False)
     files: list[str] = []
-    flags: set[str] = set()
     for i in args[1:]:
-        if i.startswith("-"):
-            flags.add(i)
-        elif os.path.isfile(i):
+        if os.path.isfile(i):
             files.append(i)
         else:
             print(f"File {i} does not exist, skipping", file=sys.stderr)
@@ -421,7 +419,11 @@ def study(_: list[str], *args: str) -> return_value:
             time_module.sleep(1)
             print("\r\033[K", end="")
             time_module.sleep(1)
+    DO_WRONG: bool = "--do-wrong" in flags
+    chances: int = GLOBALS["chances"]
     for i in question_list:
+        if DO_WRONG and i not in flags:
+            continue
         clear()
         print(title)
         time += 1
@@ -442,7 +444,7 @@ def study(_: list[str], *args: str) -> return_value:
             i = splitor + " " + i
         qer: str = (len(f"{time}{total} ")) * " " + ">> "
         print(f"({time}/{total})", i)
-        trying: int = GLOBALS["chances"]
+        trying: int = chances
         while (
             answer := set(i.strip() for i in input(qer, history=history).split("+"))
         ) != sets:
@@ -462,11 +464,20 @@ def study(_: list[str], *args: str) -> return_value:
             time_module.sleep(0.1)
             continue
         wrong_list.add((i, trying))
-    for i in wrong_list:
-        if i[1] < GLOBALS["chances"]:
-            print(f"{i[0]}[{i[1]}]")
+    clear()
+    print("Study stat: ")
+    for question, time in wrong_list:
+        if time < GLOBALS["chances"]:
+            print(f"{question}[{time}]")
+    getchar("Press any key to continue>> ")
     if input("try again? ").strip().lower() in trues:
-        return return_value(exit=False, try_again=True)
+        result = return_value(exit=False, try_again=True)
+        if ("do-wrong-again-only",) in rule["set"]:
+            q: list[str] = ["--do-wrong"]
+            for question, time in wrong_list:
+                if time < chances:
+                    q.append(question)
+            result.flag = q
     return result
 
 
@@ -881,7 +892,7 @@ def executor() -> None:
             if value.exit:
                 break
             while value.try_again:
-                value = commands.get(command, unknown)(flags, *arguments)
+                value = commands.get(command, unknown)(flags + value.flag, *arguments)
                 if value.exit:
                     break
             else:
