@@ -38,7 +38,7 @@ from ubelt import shrinkuser  # type: ignore
 import time as time_module
 
 SPECIAL_CHARS: str = "~:"
-MAGIC_STRING: str = "35c4p3d"
+MAGIC_STRINGS: dict[str, str] = {"exit": "35c4p3d", "pause": "p4u53"}
 trues: tuple[str, ...] = ("y", "yes", "true")
 PATH: str = os.getcwd()
 
@@ -401,7 +401,7 @@ def study(flags: list[str], *args: str) -> return_value:
         return result
     question_list: list[str] = list(questions.keys())
     random.shuffle(question_list)
-    wrong_list: set[tuple[str, int]] = set()
+    status_list: set[tuple[str, str, int]] = set()
     time: int = 0
     title: str = " & ".join(titles)
     total: int = len(question_list)
@@ -421,9 +421,15 @@ def study(flags: list[str], *args: str) -> return_value:
             time_module.sleep(1)
     DO_WRONG: bool = "--do-wrong" in flags
     chances: int = GLOBALS["chances"]
+    time_consumed: float = 0
+    time_start_stamp: float = time_module.time()
+    done_question: int = 0
+    most_question: str = ""
+    most_time: float = 0
     for i in question_list:
         if DO_WRONG and i not in flags:
             continue
+        done_question += 1
         clear()
         print(title)
         time += 1
@@ -445,12 +451,18 @@ def study(flags: list[str], *args: str) -> return_value:
         qer: str = (len(f"{time}{total} ")) * " " + ">> "
         print(f"({time}/{total})", i)
         trying: int = chances
+        start: float = time_module.time()
         while (
             answer := set(i.strip() for i in input(qer, history=history).split("+"))
         ) != sets:
-            if MAGIC_STRING in answer:
-                print("Magic string detected, exiting...")
+            if MAGIC_STRINGS["exit"] in answer:
+                print("Escape magic string detected, exiting...")
                 return result
+            if MAGIC_STRINGS["pause"] in answer:
+                print("Pause magic string detected, paused...")
+                time_consumed = time_module.time() - time_start_stamp
+                input("Press enter to resume>> ")
+                time_start_stamp = time_module.time()
             trying -= 1
             print("You're wrong! Please try again.")
             if trying == 0:
@@ -461,22 +473,38 @@ def study(flags: list[str], *args: str) -> return_value:
                 break
         else:
             print("Correct!")
+            end: float = time_module.time() - start
+            if end > most_time:
+                most_question = i
+                most_time = end
             time_module.sleep(0.1)
             continue
-        wrong_list.add((i, trying))
+        status_list.add((i, "~".join(sets), trying))
     clear()
     print("Study stat: ")
-    for question, time in wrong_list:
+    print(f"Time consumed: {time_consumed:.2f}")
+    print(f"Average time per question: {time_consumed/done_question:.2f}")
+    print(f"Question that used most time: {most_question} in {most_time:.2f} sec")
+    wrong_list: set[tuple[str, str, int]] = set()
+    for question, answer, time in status_list:
         if time < GLOBALS["chances"]:
             print(f"{question}[{time}]")
+            wrong_list.add((question, answer, time))
+    if "--export-wrong" in flags:
+        for i in args[1:]:
+            if os.path.isfile(i):
+                continue
+            with open(i, "a+", encoding="utf-8") as file:
+                file.write(f"Wrong list for {title}")
+                for question, answer, __ in wrong_list:
+                    file.write(f"{question}~{answer}")
     getchar("Press any key to continue>> ")
     if input("try again? ").strip().lower() in trues:
         result = return_value(exit=False, try_again=True)
         if ("do-wrong-again-only",) in rule["set"]:
             q: list[str] = ["--do-wrong"]
-            for question, time in wrong_list:
-                if time < chances:
-                    q.append(question)
+            for question, __, __ in wrong_list:
+                q.append(question)
             result.flag = q
     return result
 
@@ -563,7 +591,7 @@ def _help(flags: list[str], *args: str) -> return_value:
     print("Available commands:")
     for i in commands:
         print(" " * 17, i)
-    print("Magic string(for escaping when you're studying):", MAGIC_STRING)
+    print("Magic strings:", MAGIC_STRINGS)
     return result
 
 
@@ -714,7 +742,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
                 else:
                     print(f'Word "{word}" not found.')
                     word = input("do you mean >> ")
-                    if word == MAGIC_STRING:
+                    if word == MAGIC_STRINGS["exit"]:
                         break
                     continue
                 break
