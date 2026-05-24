@@ -547,7 +547,7 @@ def study(flags: list[str], *args: str) -> return_value:
                 )
             ):
                 print(
-                    "Are you playing on something else? Go either play, or "
+                    "Are you doing on something else? Go either play, or "
                     f"study! Don't PRETEND to study. You've used too much time ({end} sec)"
                 )
                 break_through = True
@@ -561,7 +561,7 @@ def study(flags: list[str], *args: str) -> return_value:
             safe_int(specific_rules["max_time"].pop()[0]) or GLOBALS["max_time"], 3600
         ):
             print(
-                "Are you playing on something else? Go either play, or "
+                "Are you doing on something else? Go either play, or "
                 f"study! Don't PRETEND to study. You've used too much time ({end} sec)"
             )
             break
