@@ -517,6 +517,8 @@ def study(flags: list[str], *args: str) -> return_value:
         while (
             answer := set(i.strip() for i in input(qer, history=history).split("+"))
         ) != sets:
+            if break_through:
+                break
             if MAGIC_STRINGS["exit"] in answer:
                 print("Escape magic string detected, exiting...")
                 return result
@@ -527,6 +529,15 @@ def study(flags: list[str], *args: str) -> return_value:
                 time_start_stamp = time_module.time()
             trying -= 1
             print("You're wrong! Please try again.")
+            if (end := time_module.time() - start) > min(
+                safe_int(specific_rules["max_time"].pop()[0]) or GLOBALS["max_time"],
+                3600,
+            ):
+                print(
+                    "Are you doing on something else? Go either play, or "
+                    f"study! Don't PRETEND to study. You've used too much time ({end} sec)"
+                )
+                break_through = True
             if trying == 0:
                 print(
                     "You've ran out of chances! The correct answers are: ",
@@ -557,14 +568,6 @@ def study(flags: list[str], *args: str) -> return_value:
         if end > most_time:
             most_question = i
             most_time = end
-        if end > min(
-            safe_int(specific_rules["max_time"].pop()[0]) or GLOBALS["max_time"], 3600
-        ):
-            print(
-                "Are you doing on something else? Go either play, or "
-                f"study! Don't PRETEND to study. You've used too much time ({end} sec)"
-            )
-            break
         status_list.add((i, "~".join(sets), trying))
     clear()
     print("Study stat: ")
