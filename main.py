@@ -495,9 +495,14 @@ def study(flags: list[str], *args: str) -> return_value:
             if os.path.isfile(i):
                 continue
             with open(i, "a+", encoding="utf-8") as file:
-                file.write(f"Wrong list for {title}")
+                file.write(f"Wrong list for {title}\n")
+                file.write("[meta start]\n")
+                for r, content in rule.items():
+                    file.write(f"{r}: {",,".join("^".join(i) for i in content)}\n")
+                file.write("[meta end]\n")
                 for question, answer, __ in wrong_list:
-                    file.write(f"{question}~{answer}")
+                    file.write(f"{question}~{answer}\n")
+            break
     getchar("Press any key to continue>> ")
     if input("try again? ").strip().lower() in trues:
         result = return_value(exit=False, try_again=True)
@@ -758,11 +763,11 @@ def look_up(flags: list[str], *args: str) -> return_value:
     with open(args[1] + ".dtb", "a", encoding="utf-8") as file:
         file.write(input("title? ") + "\n")
         if input("write meta data?") in trues:
-            file.write("[meta start]")
+            file.write("[meta start]\n")
             inp: str
             while (inp := input("meta data >> ")) != "END META":
                 file.write(inp + "\n")
-            file.write("[meta end]")
+            file.write("[meta end]\n")
         for word, definition in res.items():
             file.write(f"{definition}~{word.strip()}\n")
     print(f"Ouput was written in file {args[1]}.dtb")
