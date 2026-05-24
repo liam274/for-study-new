@@ -2,3 +2,4 @@
 *.md
 *.dtbs
 *.txt
+!README.md
