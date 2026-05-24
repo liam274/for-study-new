@@ -663,7 +663,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
                         )
                     if not ("-a" in flags or "--auto" in flags):
                         while (
-                            ins := (int(input("Choose one >>")) - 1)
+                            (ins := (int(input("Choose one >>")) - 1))
                             and ins < 0
                             and ins >= len(defs)
                         ):
