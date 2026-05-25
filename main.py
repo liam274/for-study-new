@@ -198,7 +198,7 @@ class meta_data_parser:
         touch_end: bool = False
         touch: int = 0
         for ln, _ in enumerate(data2):
-            testie: list[str] = _.split(" ")
+            testie: list[str] = _.strip().split(" ")
             if touch_end:
                 if testie[0].startswith("%if"):
                     touch += 1
@@ -224,7 +224,7 @@ class meta_data_parser:
             if ":" not in _:
                 print(f'Error occurred at line {ln}, separator ":" expected')
                 return
-            command, argument = _.split(":", maxsplit=1)
+            command, argument = _.strip().split(":", maxsplit=1)
             self.data[command] += list(
                 tuple(macro.get(i, i).split("^")) for i in modify[command](argument)
             )
