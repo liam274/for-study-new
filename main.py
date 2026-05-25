@@ -206,6 +206,11 @@ class meta_data_parser:
                     touch -= 1
                     if touch == 0:
                         touch_end = False
+                elif testie[0] == "%else":
+                    if touch == 1:
+                        touch = 0
+                        touch_end = False
+                        in_if += 1
                 continue
             if _[0] == "%":
                 if testie[0] == "%ifdef":
@@ -220,6 +225,8 @@ class meta_data_parser:
                         touch_end = True
                 elif testie[0] == "%endif":
                     in_if -= 1
+                elif testie[0] == "%else":
+                    touch_end = True
                 continue
             if ":" not in _:
                 print(f'Error occurred at line {ln}, separator ":" expected')
