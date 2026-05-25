@@ -194,9 +194,27 @@ class meta_data_parser:
                 print(
                     f'Error occurred at line {line_num}, macro "{line.split(" ")[0]}" does not have enough parameter'
                 )
-
+        in_if: int = 0
+        touch_end: bool = False
+        touch: int = 0
         for ln, _ in enumerate(data2):
-            if _.startswith("%"):
+            testie: list[str] = _.split(" ")
+            if touch_end:
+                if testie[0].startswith("%if"):
+                    touch += 1
+                elif testie[0] == "%endif":
+                    touch -= 1
+                    if touch == 0:
+                        touch_end = False
+                continue
+            if _[0] == "%":
+                if testie[0] == "%ifdef":
+                    if testie[1] in macro:
+                        in_if += 1
+                    else:
+                        touch_end = True
+                elif testie[0] == "%endif":
+                    in_if -= 1
                 continue
             if ":" not in _:
                 print(f'Error occurred at line {ln}, separator ":" expected')
@@ -205,6 +223,8 @@ class meta_data_parser:
             self.data[command] += list(
                 tuple(macro.get(i, i).split("^")) for i in modify[command](argument)
             )
+        if in_if:
+            print(f"Error occurred when pharsing macro, found unclosed if.")
 
     def run_rule(self: meta_data_parser, data: str) -> str:
         for rule in self.data["dismiss"]:
@@ -1040,7 +1060,8 @@ def compile(data: str) -> tuple[str, ...]:
             temp.append(char)
             continue
         if char == " ":
-            result.append("".join(temp))
+            if temp:
+                result.append("".join(temp))
             temp.clear()
             continue
         temp.append(char)
