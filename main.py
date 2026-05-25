@@ -739,14 +739,17 @@ def cat(flags: list[str], *args: str) -> return_value:
     if len(args) < 2:
         print("No path provided")
         return result
-    if os.path.isdir(args[1]):
-        print(f"{args[1]} is a directory")
-        return result
-    if not os.path.isfile(args[1]):
-        print(f"{args[1]} does not exist")
-        return result
-    with open(args[1], "r", encoding="utf-8") as file:
-        print(file.read())
+    for path in args[1:]:
+        if os.path.isdir(path):
+            print(f"{path} is a directory")
+            return result
+        if not os.path.isfile(path):
+            print(f"{path} does not exist")
+            return result
+        with open(path, "r", encoding="utf-8") as file:
+            if "--no-flag" not in flags:
+                print(path + ":")
+            print(file.read())
     return result
 
 
