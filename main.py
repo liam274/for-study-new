@@ -213,6 +213,11 @@ class meta_data_parser:
                         in_if += 1
                     else:
                         touch_end = True
+                elif testie[0] == "%ifndef":
+                    if testie[1] not in macro:
+                        in_if += 1
+                    else:
+                        touch_end = True
                 elif testie[0] == "%endif":
                     in_if -= 1
                 continue
