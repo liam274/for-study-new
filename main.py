@@ -160,32 +160,37 @@ class meta_data_parser:
                 continue
             if line[1] == "%":  # comment
                 continue
+            print(line)
+            print(f"\tin_if: {in_if}")
+            print(f"\ttouch_end: {touch_end}")
+            print(f"\ttouch: {touch}")
+            print(f"\tparent_touch_end: {parent_touch_end}\n")
             testie: list[str] = line.strip().split(" ")
-            if touch_end:
-                if testie[0].startswith("%if"):
-                    touch += 1
-                elif testie[0] == "%endif":
-                    touch -= 1
-                    if touch == 0:
-                        touch_end = False
-                        parent_touch_end = False
-                elif testie[0] == "%else":
-                    if touch < 2:
-                        touch = 0
-                        touch_end = False
-                        in_if += 1
-                elif testie[0] == "%elifdef":
-                    if touch < 2:
-                        touch = 0
-                        touch_end = False
-                        if parent_touch_end or testie[1] not in macro:
-                            touch_end = True
-                            parent_touch_end = True
-                        else:
-                            in_if += 1
-                continue
             try:
-                if line.startswith("%define"):
+                if touch_end:  # skipping
+                    if testie[0].startswith("%if"):  # count skip higher
+                        touch += 1
+                    elif testie[0] == "%endif":  # count skip lower
+                        touch -= 1
+                        if touch == 0:  # get out
+                            touch_end = False
+                            parent_touch_end = False
+                            in_if -= 1
+                    elif testie[0] == "%else":
+                        if touch < 2:  # check get in else
+                            touch = 0
+                            touch_end = False
+                    elif testie[0] == "%elifdef":
+                        if touch < 2:
+                            touch = 0
+                            touch_end = False
+                            in_if += 1
+                            if testie[1] not in macro:
+                                touch_end = True
+                                parent_touch_end = True
+                                in_if -= 1
+                                touch = 1
+                elif line.startswith("%define"):
                     _, name, value = line.split(maxsplit=2)
                     macro[name] = value.strip('"')
                 elif line.startswith("%include"):
@@ -239,16 +244,17 @@ class meta_data_parser:
                             f"{YELLOW}Warning! Provided macro uses a higher version, upgrading the application is suggested.{RESET}"
                         )
                 elif testie[0] == "%ifdef":
-                    if testie[1] in macro and not parent_touch_end:
-                        in_if += 1
-                    else:
-                        touch_end = True
-                elif testie[0] == "%ifndef":
-                    if testie[1] not in macro and not parent_touch_end:
-                        in_if += 1
-                    else:
+                    in_if += 1
+                    if testie[1] not in macro or parent_touch_end:
                         touch_end = True
                         parent_touch_end = True
+                        touch += 1
+                elif testie[0] == "%ifndef":
+                    in_if += 1
+                    if testie[1] in macro or parent_touch_end:
+                        touch_end = True
+                        parent_touch_end = True
+                        touch += 1
                 elif testie[0] == "%endif":
                     in_if -= 1
                 elif testie[0].startswith("%el"):
@@ -260,7 +266,9 @@ class meta_data_parser:
                 )
                 return False
         if in_if:
-            print(f"{RED}Error occurred when pharsing macro, found unclosed if.{RESET}")
+            print(
+                f"{RED}Error occurred when pharsing macro, found unclosed if, {in_if}.{RESET}"
+            )
             return False
         in_if = 0
         touch_end = False
@@ -278,33 +286,35 @@ class meta_data_parser:
                     if touch == 0:
                         touch_end = False
                         parent_touch_end = False
+                        in_if -= 1
                 elif testie[0] == "%else":
                     if touch < 2:
                         touch = 0
                         touch_end = False
-                        in_if += 1
                 elif testie[0] == "%elifdef":
                     if touch < 2:
                         touch = 0
                         touch_end = False
-                        if parent_touch_end or testie[1] not in macro:
+                        in_if += 1
+                        if testie[1] not in macro:
                             touch_end = True
                             parent_touch_end = True
-                        else:
-                            in_if += 1
+                            in_if -= 1
+                            touch = 1
                 continue
             if _[0] == "%":
                 if testie[0] == "%ifdef":
-                    if testie[1] in macro and not parent_touch_end:
-                        in_if += 1
-                    else:
-                        touch_end = True
-                elif testie[0] == "%ifndef":
-                    if testie[1] not in macro and not parent_touch_end:
-                        in_if += 1
-                    else:
+                    in_if += 1
+                    if testie[1] not in macro or parent_touch_end:
                         touch_end = True
                         parent_touch_end = True
+                        touch += 1
+                elif testie[0] == "%ifndef":
+                    in_if += 1
+                    if testie[1] in macro or parent_touch_end:
+                        touch_end = True
+                        parent_touch_end = True
+                        touch += 1
                 elif testie[0] == "%endif":
                     in_if -= 1
                 elif testie[0].startswith("%el"):
@@ -773,7 +783,7 @@ def vim(flags: list[str], *args: str) -> return_value:
     if os.path.isdir(args[1]):
         print(f"{args[1]} is a directory")
         return result
-    subprocess.call(["vim", args[1], *flags])
+    subprocess.call(["nvim", args[1], *flags])
     return result
 
 
@@ -942,7 +952,7 @@ DEFAULT_URL: str = "https://api.dictionaryapi.dev/api/v2/entries/en/"
 
 def look_up(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
-    if not os.path.exists(args[1]) or ("-w" in flags or "--word" in flags):
+    if not os.path.exists(args[1]) and ("-w" in flags or "--word" in flags):
         for word in args[1:]:
             defs = fetch(DEFAULT_URL + word)[0]["meanings"]
             if len(defs) == 0:
@@ -1230,7 +1240,6 @@ def executor() -> None:
                 continue
             break
         except KeyboardInterrupt:
-            print()
             continue
 
 
