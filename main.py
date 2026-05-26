@@ -164,10 +164,7 @@ class meta_data_parser:
                     _, name = line.split(maxsplit=2)
                     if not os.path.exists(name):
                         print(
-                            ANSI(
-                                f"{RED}Error occurred when trying to open file {name}{RESET}"
-                            ),
-                            file=STDERR,
+                            f"{RED}Error occurred when trying to open file {name}{RESET}"
                         )
                     s: list[str] = []
                     meta: bool = False
@@ -185,10 +182,7 @@ class meta_data_parser:
                     _, name = line.split(maxsplit=2)
                     if not os.path.exists(name):
                         print(
-                            ANSI(
-                                f"{RED}Error occurred when trying to open file {name}{RESET}"
-                            ),
-                            file=STDERR,
+                            f"{RED}Error occurred when trying to open file {name}{RESET}"
                         )
                     meta: bool = False
                     with open(name, encoding="utf-8") as file:
@@ -202,31 +196,23 @@ class meta_data_parser:
                                 dataa.extend(i)
                 elif line.startswith("%error"):
                     _, content = line.split(maxsplit=2)
-                    print(ANSI(RED + content.strip("\"'") + RESET), file=STDERR)
+                    print(RED + content.strip("\"'") + RESET)
                     return False
                 elif line.startswith("%version"):
                     _, version = line.split(maxsplit=1)
                     if safe_int(version) > MACRO_VERSION:
                         if "--omit-macro-version" in flags:
                             print(
-                                ANSI(
-                                    f"{RED}Error! Provided macro uses a higher version, please either upgrade the application, "
-                                    f"or uses the flag --omit-macro-version!{RESET}"
-                                ),
-                                file=STDERR,
+                                f"{RED}Error! Provided macro uses a higher version, please either upgrade the application, "
+                                f"or uses the flag --omit-macro-version!{RESET}"
                             )
                             return False
                         print(
-                            ANSI(
-                                f"{YELLOW}Warning! Provided macro uses a higher version, upgrading the application is suggested.{RESET}"
-                            )
+                            f"{YELLOW}Warning! Provided macro uses a higher version, upgrading the application is suggested.{RESET}"
                         )
             except ValueError:
                 print(
-                    ANSI(
-                        f'{RED}Error occurred at line {line_num}, macro "{line.split(" ")[0]}" does not have enough parameter{RESET}'
-                    ),
-                    file=STDERR,
+                    f'{RED}Error occurred at line {line_num}, macro "{line.split(" ")[0]}" does not have enough parameter{RESET}'
                 )
         in_if: int = 0
         touch_end: bool = False
@@ -273,12 +259,7 @@ class meta_data_parser:
                     parent_touch_end = True
                 continue
             if ":" not in _:
-                print(
-                    ANSI(
-                        f'{RED}Error occurred at line {ln}, separator ":" expected{RED}'
-                    ),
-                    file=STDERR,
-                )
+                print(f'{RED}Error occurred at line {ln}, separator ":" expected{RED}')
                 return False
             command, argument = _.strip().split(":", maxsplit=1)
             self.data[command] += list(
@@ -291,25 +272,15 @@ class meta_data_parser:
         if safe_int(self.data["version"][0][0]) > META_VERSION:
             if "--omit-meta-version" in flags:
                 print(
-                    ANSI(
-                        f"{RED}Error! Provided meta uses a higher version, please either upgrade the application, "
-                        f"or uses the flag --omit-meta-version!{RED}"
-                    ),
-                    file=STDERR,
+                    f"{RED}Error! Provided meta uses a higher version, please either upgrade the application, "
+                    f"or uses the flag --omit-meta-version!{RED}"
                 )
                 return False
             print(
-                ANSI(
-                    f"{YELLOW}Warning! Provided meta uses a higher version, upgrading the application is suggested.{RESET}"
-                )
+                f"{YELLOW}Warning! Provided meta uses a higher version, upgrading the application is suggested.{RESET}"
             )
         if in_if:
-            print(
-                ANSI(
-                    f"{RED}Error occurred when pharsing macro, found unclosed if.{RESET}"
-                ),
-                file=STDERR,
-            )
+            print(f"{RED}Error occurred when pharsing macro, found unclosed if.{RESET}")
         return True
 
     def run_rule(self: meta_data_parser, data: str) -> str:
@@ -532,10 +503,7 @@ def study(flags: list[str], *args: str) -> return_value:
         if os.path.isfile(i):
             files.append(i)
         else:
-            print(
-                ANSI(f"{RED}Error: File {i} does not exist, skipping{RESET}"),
-                file=STDERR,
-            )
+            print(f"{RED}Error: File {i} does not exist, skipping{RESET}")
     questions: dict[str, answer] = {}
     titles: list[str] = []
     rule: dict[str, set[tuple[str, ...]]] = {}
@@ -546,16 +514,14 @@ def study(flags: list[str], *args: str) -> return_value:
         for name, _rule in rule_temp.items():
             rule.update({name: set(_rule).union(rule.get(name, set()))})
         if not title:
-            print(
-                ANSI(f"{RED}Error: File {i} is not valid, skipping{RESET}"), file=STDERR
-            )
+            print(f"{RED}Error: File {i} is not valid, skipping{RESET}")
             continue
         titles.append(title)
         for dic in _:
             for n in dic[0]:
                 questions.update({n: dic[1]})
     if not questions:
-        print(ANSI(f"{RED}Error: No valid file found, exiting{RESET}"), file=STDERR)
+        print(f"{RED}Error: No valid file found, exiting{RESET}")
         return result
     question_list: list[str] = list(questions.keys())
     random.shuffle(question_list)
@@ -567,10 +533,7 @@ def study(flags: list[str], *args: str) -> return_value:
     rule["mode"] = set(rule["mode"])
     if len(rule["mode"]) > 1:
         print(
-            ANSI(
-                f"{RED}Error occurred when trying to study with {{{", ".join(args)}}}, found multiple mode. You may only study in one mode at a time.{RESET}"
-            ),
-            file=STDERR,
+            f"{RED}Error occurred when trying to study with {{{", ".join(args)}}}, found multiple mode. You may only study in one mode at a time.{RESET}"
         )
         return result
     MODE: str = rule["mode"].pop()[0] if rule["mode"] else ""
@@ -938,10 +901,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
     res: dict[str, str] = {}
     if not os.path.exists(args[1]):
         print(
-            ANSI(
-                f"{RED}Error occurred when trying to read file {args[1]}, not found.{RESET}"
-            ),
-            file=STDERR,
+            f"{RED}Error occurred when trying to read file {args[1]}, not found.{RESET}"
         )
         return result
     with open(args[1], encoding="utf-8") as file:
@@ -979,11 +939,8 @@ def look_up(flags: list[str], *args: str) -> return_value:
             res[word] = defs[ins]["definitions"][0]["definition"]
     if os.path.exists(args[1] + ".dtb") and not ("-f" in flags or "--force" in flags):
         print(
-            ANSI(
-                f"{RED}Error occurred when trying to write to file {args[1]}.dtb, please use -f or --force to force overwrite, or "
-                f"change the name of the existed file{RESET}"
-            ),
-            file=STDERR,
+            f"{RED}Error occurred when trying to write to file {args[1]}.dtb, please use -f or --force to force overwrite, or "
+            f"change the name of the existed file{RESET}"
         )
     if "-f" in flags or "--force" in flags:
         with open(args[1] + ".dtb", "w", encoding="utf-8") as file:
@@ -1006,10 +963,7 @@ def meta(flags: list[str], *args: str) -> return_value:
     result: return_value = return_value(exit=False, try_again=False)
     if not os.path.exists(args[1]):
         print(
-            ANSI(
-                f"{RED}Error occurred when trying to open file {args[1]}, not found.{RESET}"
-            ),
-            file=STDERR,
+            f"{RED}Error occurred when trying to open file {args[1]}, not found.{RESET}"
         )
     if "-c" in flags or "--check" in flags:
         checker: meta_data_parser = meta_data_parser()
