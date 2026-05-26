@@ -160,11 +160,6 @@ class meta_data_parser:
                 continue
             if line[1] == "%":  # comment
                 continue
-            print(line)
-            print(f"\tin_if: {in_if}")
-            print(f"\ttouch_end: {touch_end}")
-            print(f"\ttouch: {touch}")
-            print(f"\tparent_touch_end: {parent_touch_end}\n")
             testie: list[str] = line.strip().split(" ")
             try:
                 if touch_end:  # skipping
