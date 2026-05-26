@@ -58,10 +58,9 @@ class return_value:
     flag: list[str] = field(default_factory=lambda: [])
 
 
-class StudyCompleter(Completer):
+class StudyCompleter(Completer):  # deepseek's job
     def __init__(self):
         self.cmd_list = list(commands.keys()) + list(alias.keys())
-        # 注意：如果你的库确实不支持 quote_char，请勿传入该参数
         self.path_completer = PathCompleter(expanduser=True)
 
     def get_completions(self, document: Document, complete_event: CompleteEvent):
@@ -69,30 +68,22 @@ class StudyCompleter(Completer):
         words = text.split()
         if not words:
             return
-
-        # 命令补全
         if len(words) == 1 and not text.endswith(" "):
             current = words[0]
             for cmd in self.cmd_list:
                 if cmd.startswith(current):
                     yield Completion(cmd, start_position=-len(current))
             return
-
-        # 路径补全
         last_space = text.rfind(" ")
         if last_space == -1:
             return
-        partial_path = text[last_space + 1 :]  # 用户已输入的路径片段
+        partial_path = text[last_space + 1 :]
         path_doc = Document(text=partial_path, cursor_position=len(partial_path))
 
         for comp in self.path_completer.get_completions(path_doc, complete_event):
-            # comp.text 是 PathCompleter 给出的剩余补全部分（不含已输入前缀）
-            full_path = partial_path + comp.text  # 拼接出完整路径
-            # 如果完整路径含有空格，加双引号包裹
+            full_path = partial_path + comp.text
             if " " in full_path:
                 full_path = f'"{full_path}"'
-
-            # 替换范围：从 partial_path 开始的部分全部替换为 full_path
             yield Completion(
                 full_path, start_position=-len(partial_path), display=comp.display
             )
