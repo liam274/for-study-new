@@ -151,75 +151,16 @@ class meta_data_parser:
         macro: dict[str, str] = {}
         data, data2 = itertools.tee(data)
         dataa: ExtendableIterator[str] = ExtendableIterator(data)
+        in_if: int = 0
+        touch_end: bool = False
+        touch: int = 0
+        parent_touch_end: bool = False
         for line_num, line in enumerate(dataa):
             if line[0] != "%":
                 continue
             if line[1] == "%":  # comment
                 continue
-            try:
-                if line.startswith("%define"):
-                    _, name, value = line.split(maxsplit=2)
-                    macro[name] = value.strip('"')
-                elif line.startswith("%include"):
-                    _, name = line.split(maxsplit=2)
-                    if not os.path.exists(name):
-                        print(
-                            f"{RED}Error occurred when trying to open file {name}{RESET}"
-                        )
-                    s: list[str] = []
-                    meta: bool = False
-                    with open(name, encoding="utf-8") as file:
-                        for i in file.readlines():
-                            i = i.strip()
-                            if i == "[meta start]":
-                                meta = True
-                            elif i == "[meta end]":
-                                meta = False
-                            if meta:
-                                s.append(i)
-                    data2 = itertools.chain(data2, (i for i in s))
-                elif line.startswith("%import"):
-                    _, name = line.split(maxsplit=2)
-                    if not os.path.exists(name):
-                        print(
-                            f"{RED}Error occurred when trying to open file {name}{RESET}"
-                        )
-                    meta: bool = False
-                    with open(name, encoding="utf-8") as file:
-                        for i in file.readlines():
-                            i = i.strip()
-                            if i == "[meta start]":
-                                meta = True
-                            elif i == "[meta end]":
-                                meta = False
-                            if meta:
-                                dataa.extend(i)
-                elif line.startswith("%error"):
-                    _, content = line.split(maxsplit=2)
-                    print(RED + content.strip("\"'") + RESET)
-                    return False
-                elif line.startswith("%version"):
-                    _, version = line.split(maxsplit=1)
-                    if safe_int(version) > MACRO_VERSION:
-                        if "--omit-macro-version" in flags:
-                            print(
-                                f"{RED}Error! Provided macro uses a higher version, please either upgrade the application, "
-                                f"or uses the flag --omit-macro-version!{RESET}"
-                            )
-                            return False
-                        print(
-                            f"{YELLOW}Warning! Provided macro uses a higher version, upgrading the application is suggested.{RESET}"
-                        )
-            except ValueError:
-                print(
-                    f'{RED}Error occurred at line {line_num}, macro "{line.split(" ")[0]}" does not have enough parameter{RESET}'
-                )
-        in_if: int = 0
-        touch_end: bool = False
-        touch: int = 0
-        parent_touch_end: bool = False
-        for ln, _ in enumerate(data2):
-            testie: list[str] = _.strip().split(" ")
+            testie: list[str] = line.strip().split(" ")
             if touch_end:
                 if testie[0].startswith("%if"):
                     touch += 1
@@ -237,7 +178,119 @@ class meta_data_parser:
                     if touch < 2:
                         touch = 0
                         touch_end = False
-                        if not parent_touch_end and testie[1] in macro:
+                        if parent_touch_end or testie[1] not in macro:
+                            touch_end = True
+                            parent_touch_end = True
+                        else:
+                            in_if += 1
+                continue
+            try:
+                if line.startswith("%define"):
+                    _, name, value = line.split(maxsplit=2)
+                    macro[name] = value.strip('"')
+                elif line.startswith("%include"):
+                    _, name = line.split(maxsplit=1)
+                    if not os.path.exists(name):
+                        print(
+                            f"{RED}Error occurred when trying to open file {name}{RESET}"
+                        )
+                    s: list[str] = []
+                    meta: bool = False
+                    with open(name, encoding="utf-8") as file:
+                        for i in file.readlines():
+                            i = i.strip()
+                            if i == "[meta start]":
+                                meta = True
+                            elif i == "[meta end]":
+                                meta = False
+                            if meta:
+                                s.append(i)
+                    data2 = itertools.chain(data2, (i for i in s))
+                elif line.startswith("%import"):
+                    _, name = line.split(maxsplit=1)
+                    if not os.path.exists(name):
+                        print(
+                            f"{RED}Error occurred when trying to open file {name}{RESET}"
+                        )
+                    meta: bool = False
+                    with open(name, encoding="utf-8") as file:
+                        for i in file.readlines():
+                            i = i.strip()
+                            if i == "[meta start]":
+                                meta = True
+                            elif i == "[meta end]":
+                                meta = False
+                            if meta:
+                                dataa.extend(i)
+                elif line.startswith("%error"):
+                    _, content = line.split(maxsplit=1)
+                    print(RED + content.strip("\"'") + RESET)
+                    return False
+                elif line.startswith("%version"):
+                    _, version = line.split(maxsplit=1)
+                    if safe_int(version) > MACRO_VERSION:
+                        if "--omit-macro-version" in flags:
+                            print(
+                                f"{RED}Error! Provided macro uses a higher version, please either upgrade the application, "
+                                f"or uses the flag --omit-macro-version!{RESET}"
+                            )
+                            return False
+                        print(
+                            f"{YELLOW}Warning! Provided macro uses a higher version, upgrading the application is suggested.{RESET}"
+                        )
+                elif testie[0] == "%ifdef":
+                    if testie[1] in macro and not parent_touch_end:
+                        in_if += 1
+                    else:
+                        touch_end = True
+                elif testie[0] == "%ifndef":
+                    if testie[1] not in macro and not parent_touch_end:
+                        in_if += 1
+                    else:
+                        touch_end = True
+                        parent_touch_end = True
+                elif testie[0] == "%endif":
+                    in_if -= 1
+                elif testie[0].startswith("%el"):
+                    touch_end = True
+                    parent_touch_end = True
+            except ValueError:
+                print(
+                    f'{RED}Error occurred at line {line_num}, macro "{line.split(" ")[0]}" does not have enough parameter{RESET}'
+                )
+                return False
+        if in_if:
+            print(f"{RED}Error occurred when pharsing macro, found unclosed if.{RESET}")
+            return False
+        in_if = 0
+        touch_end = False
+        touch = 0
+        parent_touch_end = False
+        for ln, _ in enumerate(data2):
+            testie: list[str] = _.strip().split(" ")
+            if testie[0].startswith("%%"):
+                continue
+            if touch_end:
+                if testie[0].startswith("%if"):
+                    touch += 1
+                elif testie[0] == "%endif":
+                    touch -= 1
+                    if touch == 0:
+                        touch_end = False
+                        parent_touch_end = False
+                elif testie[0] == "%else":
+                    if touch < 2:
+                        touch = 0
+                        touch_end = False
+                        in_if += 1
+                elif testie[0] == "%elifdef":
+                    if touch < 2:
+                        touch = 0
+                        touch_end = False
+                        if parent_touch_end or testie[1] not in macro:
+                            touch_end = True
+                            parent_touch_end = True
+                        else:
                             in_if += 1
                 continue
             if _[0] == "%":
@@ -281,6 +334,7 @@ class meta_data_parser:
             )
         if in_if:
             print(f"{RED}Error occurred when pharsing macro, found unclosed if.{RESET}")
+            return False
         return True
 
     def run_rule(self: meta_data_parser, data: str) -> str:
