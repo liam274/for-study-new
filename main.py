@@ -251,7 +251,6 @@ class meta_data_parser:
                     if touch < 2:
                         touch = 0
                         touch_end = False
-                        in_if += 1
                         if not parent_touch_end and testie[1] in macro:
                             in_if += 1
                 continue
