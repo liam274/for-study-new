@@ -190,7 +190,7 @@ class meta_data_parser:
                     macro[name] = value.strip('"')
                 elif line.startswith("%include"):
                     _, name = line.split(maxsplit=1)
-                    if not os.path.exists(name):
+                    if not os.path.isfile(name):
                         print(
                             f"{RED}Error occurred when trying to open file {name}{RESET}"
                         )
@@ -208,7 +208,7 @@ class meta_data_parser:
                     data2 = itertools.chain(data2, (i for i in s))
                 elif line.startswith("%import"):
                     _, name = line.split(maxsplit=1)
-                    if not os.path.exists(name):
+                    if not os.path.isfile(name):
                         print(
                             f"{RED}Error occurred when trying to open file {name}{RESET}"
                         )
@@ -626,11 +626,11 @@ def study(flags: list[str], *args: str) -> return_value:
         for name, rl in temp.rules.items():
             tempie: set[tuple[str, ...]] = rule.get(name, set())
             for r in rl:
-                for item in tempie:
+                for item in {*tempie}:
                     if conflict("^".join(r)) in item:
                         tempie.remove(item)
             specific_rules[name] = rl.union(tempie)
-        if "ignore" in specific_rules.get("set", tuple()):
+        if ("ignore",) in specific_rules.get("set", set(tuple())):
             continue
         done_question += 1
         splitor: str = (
@@ -938,7 +938,7 @@ def rm(flags: list[str], *args: str) -> return_value:
             else trues[0]
         )
         if answer.lower() in trues:
-            os.remove(args[1])
+            os.remove(path)
     return result
 
 
@@ -947,7 +947,7 @@ DEFAULT_URL: str = "https://api.dictionaryapi.dev/api/v2/entries/en/"
 
 def look_up(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
-    if not os.path.exists(args[1]) and ("-w" in flags or "--word" in flags):
+    if not os.path.isfile(args[1]) and ("-w" in flags or "--word" in flags):
         for word in args[1:]:
             defs = fetch(DEFAULT_URL + word)[0]["meanings"]
             if len(defs) == 0:
@@ -958,7 +958,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
                 )
         return result
     res: dict[str, str] = {}
-    if not os.path.exists(args[1]):
+    if not os.path.isfile(args[1]):
         print(
             f"{RED}Error occurred when trying to read file {args[1]}, not found.{RESET}"
         )
@@ -990,13 +990,13 @@ def look_up(flags: list[str], *args: str) -> return_value:
                     print("Found one definition only, picking the first one...")
                 else:
                     print(f'Word "{word}" not found.')
-                    word = input("do you mean >> ")
+                    word = input("Please correct >> ")
                     if word == MAGIC_STRINGS["exit"]:
                         break
                     continue
                 break
             res[word] = defs[ins]["definitions"][0]["definition"]
-    if os.path.exists(args[1] + ".dtb") and not ("-f" in flags or "--force" in flags):
+    if os.path.isfile(args[1] + ".dtb") and not ("-f" in flags or "--force" in flags):
         print(
             f"{RED}Error occurred when trying to write to file {args[1]}.dtb, please use -f or --force to force overwrite, or "
             f"change the name of the existed file{RESET}"
@@ -1020,7 +1020,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
 
 def meta(flags: list[str], *args: str) -> return_value:
     result: return_value = return_value(exit=False, try_again=False)
-    if not os.path.exists(args[1]):
+    if not os.path.isfile(args[1]):
         print(
             f"{RED}Error occurred when trying to open file {args[1]}, not found.{RESET}"
         )
@@ -1056,7 +1056,7 @@ def merge(flags: list[str], *args: str) -> return_value:
     result: return_value = return_value(exit=False, try_again=False)
     it: Iterator[str] = None  # type: ignore
     for file_name in args[1:]:
-        if not os.path.exists(file_name):
+        if not os.path.isfile(file_name):
             print(f"file {file_name} not found, skipping...")
         with open(file_name, encoding="utf-8") as file:
             if it is None:  # type: ignore
@@ -1064,7 +1064,7 @@ def merge(flags: list[str], *args: str) -> return_value:
             else:
                 it = itertools.chain(it, (i for i in file.readlines()[1:]))
     path: str = input("output file >> ")
-    if os.path.exists(path):
+    if os.path.isfile(path):
         if (
             input("File overlapped. Clear? ").strip().lower() in trues
             or "-f" in flags
@@ -1103,6 +1103,8 @@ def bash(_: list[str], *args: str) -> return_value:
                 for line in f.readlines():
                     try:
                         pre_command: tuple[str, ...] = compile(line.strip())
+                        if not pre_command:
+                            continue
                         command: str = pre_command[0]
                         command = alias.get(command, command)
                         flags: list[str] = []
@@ -1215,6 +1217,8 @@ def executor() -> None:
                     complete_while_typing=True,
                 )
             )
+            if not pre_command:
+                continue
             command: str = pre_command[0]
             command = alias.get(command, command)
             flags: list[str] = []
