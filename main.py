@@ -134,7 +134,11 @@ modify: dict[str, Callable[[str], Iterator[str]]] = {
     "mode": basic,
     "define": basic,
     "include": basic,
+    "version": basic,
 }
+
+META_VERSION: int = 1
+MACRO_VERSION: int = 1
 
 
 class meta_data_parser:
@@ -145,9 +149,13 @@ class meta_data_parser:
             "mode": [],
             "define": [],
             "include": [],
+            "version": [],
         }
+        self.default: dict[str, tuple[str, ...]] = {"version": (str(META_VERSION),)}
 
-    def meta(self: meta_data_parser, data: Iterator[str]) -> bool:
+    def meta(
+        self: meta_data_parser, data: Iterator[str], flags: list[str] = []
+    ) -> bool:
         macro: dict[str, str] = {}
         data, data2 = itertools.tee(data)
         dataa: ExtendableIterator[str] = ExtendableIterator(data)
@@ -194,6 +202,18 @@ class meta_data_parser:
                     _, content = line.split(maxsplit=2)
                     print(content.strip("\"'"), file=sys.stderr)
                     return False
+                elif line.startswith("%version"):
+                    _, version = line.split(maxsplit=1)
+                    if safe_int(version) > MACRO_VERSION:
+                        if "--omit-macro-version" in flags:
+                            print(
+                                "Error! Provided macro uses a higher version, please either upgrade the application, "
+                                "or uses the flag --omit-macro-version!"
+                            )
+                            return False
+                        print(
+                            "Warning! Provided macro uses a higher version, upgrading the application is suggested."
+                        )
             except ValueError:
                 print(
                     f'Error occurred at line {line_num}, macro "{line.split(" ")[0]}" does not have enough parameter'
@@ -238,6 +258,20 @@ class meta_data_parser:
             command, argument = _.strip().split(":", maxsplit=1)
             self.data[command] += list(
                 tuple(macro.get(i, i).split("^")) for i in modify[command](argument)
+            )
+        for name, default_value in self.default.items():
+            if len(self.data[name]):
+                continue
+            self.data[name] = [default_value]
+        if safe_int(self.data["version"][0][0]) > META_VERSION:
+            if "--omit-meta-version" in flags:
+                print(
+                    "Error! Provided meta uses a higher version, please either upgrade the application, "
+                    "or uses the flag --omit-meta-version!"
+                )
+                return False
+            print(
+                "Warning! Provided meta uses a higher version, upgrading the application is suggested."
             )
         if in_if:
             print(f"Error occurred when pharsing macro, found unclosed if.")
