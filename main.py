@@ -60,8 +60,10 @@ class return_value:
 
 class StudyCompleter(Completer):  # deepseek's job
     def __init__(self):
-        self.cmd_list = list(commands.keys()) + list(alias.keys())
         self.path_completer = PathCompleter(expanduser=True)
+
+    def cmd_list(self) -> set[str]:
+        return {*commands.keys()}.union(alias.keys())
 
     def get_completions(self, document: Document, complete_event: CompleteEvent):
         text = document.text_before_cursor
@@ -70,7 +72,7 @@ class StudyCompleter(Completer):  # deepseek's job
             return
         if len(words) == 1 and not text.endswith(" "):
             current = words[0]
-            for cmd in self.cmd_list:
+            for cmd in self.cmd_list():
                 if cmd.startswith(current):
                     yield Completion(cmd, start_position=-len(current))
             return
@@ -175,16 +177,19 @@ class meta_data_parser:
                         if touch < 2:  # check get in else
                             touch = 0
                             touch_end = False
-                    elif testie[0] == "%elifdef":
-                        if touch < 2:
-                            touch = 0
-                            touch_end = False
                             in_if += 1
-                            if testie[1] not in macro:
-                                touch_end = True
-                                parent_touch_end = True
-                                in_if -= 1
-                                touch = 1
+                            if testie[1] == "%ifdef":
+                                if testie[2] not in macro:
+                                    touch_end = True
+                                    parent_touch_end = True
+                                    in_if -= 1
+                                    touch = 1
+                            elif testie[1] == "%ifndef":
+                                if testie[2] in macro:
+                                    touch_end = True
+                                    parent_touch_end = True
+                                    in_if -= 1
+                                    touch = 1
                 elif line.startswith("%define"):
                     _, name, value = line.split(maxsplit=2)
                     macro[name] = value.strip('"')
@@ -286,16 +291,19 @@ class meta_data_parser:
                     if touch < 2:
                         touch = 0
                         touch_end = False
-                elif testie[0] == "%elifdef":
-                    if touch < 2:
-                        touch = 0
-                        touch_end = False
                         in_if += 1
-                        if testie[1] not in macro:
-                            touch_end = True
-                            parent_touch_end = True
-                            in_if -= 1
-                            touch = 1
+                        if testie[1] == "%ifdef":
+                            if testie[1] not in macro:
+                                touch_end = True
+                                parent_touch_end = True
+                                in_if -= 1
+                                touch = 1
+                        elif testie[1] == "%ifndef":
+                            if testie[1] in macro:
+                                touch_end = True
+                                parent_touch_end = True
+                                in_if -= 1
+                                touch = 1
                 continue
             if _[0] == "%":
                 if testie[0] == "%ifdef":
@@ -388,7 +396,7 @@ class parser:
         for i in meta_data.run_rule("\n".join(data)).split("\n"):
             if i[0] == "@":
                 _: list[str] = i.split(" ")
-                rule[_[0].lstrip("@")] = set(tuple(i.split("^")) for i in _[1:]).union(
+                rule[_[0].lstrip("@")] = {*(tuple(i.split("^")) for i in _[1:])}.union(
                     rule.get(_[0].lstrip("@"), set())
                 )
                 continue
@@ -494,14 +502,14 @@ def parse(
         special_char: str = line[0]  # type: ignore
         if special_char == "~":
             result.append(
-                ({line[1]}, answer(first=True, content=set(line[2:]), rules=rl))
+                ({line[1]}, answer(first=True, content={*line[2:]}, rules=rl))
             )
         elif special_char == ":":
             result.append(
-                ({line[1]}, answer(first=True, content=set(line[2:]), rules=rl))
+                ({line[1]}, answer(first=True, content={*line[2:]}, rules=rl))
             )
             result.append(
-                (set(line[2:]), answer(first=False, content={line[1]}, rules=rl))
+                ({*line[2:]}, answer(first=False, content={line[1]}, rules=rl))
             )
         elif special_char.startswith("-("):
             result.append(
@@ -1134,6 +1142,21 @@ def bash(_: list[str], *args: str) -> return_value:
     return result
 
 
+def unalias(_: list[str], *args: str) -> return_value:
+    global alias
+    result: return_value = return_value(try_again=False, exit=False)
+    if len(args) == 1:
+        alias.clear()
+        return result
+    for alia in args[1:]:
+        if alia in alias:
+            alias.pop(alia)
+        else:
+            print(f'Error occurred when trying to remove alias "{alia}", not found.')
+            return result
+    return result
+
+
 commands: dict[str, Callable[..., return_value]] = {
     "study": study,
     "cd": cd,
@@ -1158,6 +1181,7 @@ commands: dict[str, Callable[..., return_value]] = {
     "merge": merge,
     "info": info,
     "bash": bash,
+    "unalias": unalias,
 }
 alias: dict[str, str] = {}
 GLOBALS: dict[str, int] = {"chances": 10, "max_time": 300}
@@ -1243,5 +1267,7 @@ def executor() -> None:
 
 
 if __name__ == "__main__":
-    print("Hello from study terminal! Type 'help' for available commands.")
+    print(
+        f"Hello from study terminal! Type {GREEN}'help'{RESET} for available commands."
+    )
     executor()
