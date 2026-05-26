@@ -250,7 +250,7 @@ class meta_data_parser:
                     if touch == 0:
                         touch_end = False
                 elif testie[0] == "%else":
-                    if touch < 22:
+                    if touch < 2:
                         touch = 0
                         touch_end = False
                         in_if += 1
