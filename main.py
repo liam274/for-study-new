@@ -231,6 +231,7 @@ class meta_data_parser:
         in_if: int = 0
         touch_end: bool = False
         touch: int = 0
+        parent_touch_end: bool = False
         for ln, _ in enumerate(data2):
             testie: list[str] = _.strip().split(" ")
             if touch_end:
@@ -240,27 +241,37 @@ class meta_data_parser:
                     touch -= 1
                     if touch == 0:
                         touch_end = False
+                        parent_touch_end = False
                 elif testie[0] == "%else":
                     if touch < 2:
                         touch = 0
                         touch_end = False
                         in_if += 1
+                elif testie[0] == "%elifdef":
+                    if touch < 2:
+                        touch = 0
+                        touch_end = False
+                        in_if += 1
+                        if not parent_touch_end and testie[1] in macro:
+                            in_if += 1
                 continue
             if _[0] == "%":
                 if testie[0] == "%ifdef":
-                    if testie[1] in macro:
+                    if testie[1] in macro and not parent_touch_end:
                         in_if += 1
                     else:
                         touch_end = True
                 elif testie[0] == "%ifndef":
-                    if testie[1] not in macro:
+                    if testie[1] not in macro and not parent_touch_end:
                         in_if += 1
                     else:
                         touch_end = True
+                        parent_touch_end = True
                 elif testie[0] == "%endif":
                     in_if -= 1
-                elif testie[0] == "%else":
+                elif testie[0].startswith("%el"):
                     touch_end = True
+                    parent_touch_end = True
                 continue
             if ":" not in _:
                 print(
