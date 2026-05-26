@@ -10,7 +10,7 @@ This is a project which helps people reduce the self-studying cost, aiming to im
 import os
 import random
 import sys
-from typing import Callable, Any, Iterator
+from typing import Callable, Any, Iterator, TextIO
 import requests
 import itertools
 from collections import deque
@@ -41,6 +41,7 @@ SPECIAL_CHARS: str = "~:"
 MAGIC_STRINGS: dict[str, str] = {"exit": "35c4p3d", "pause": "p4u53", "skip": "5k1p"}
 trues: tuple[str, ...] = ("y", "yes", "true")
 PATH: str = os.getcwd()
+STDERR: TextIO = sys.stderr
 
 
 @dataclass
@@ -171,7 +172,12 @@ class meta_data_parser:
                 elif line.startswith("%include"):
                     _, name = line.split(maxsplit=2)
                     if not os.path.exists(name):
-                        print(f"Error occurred when trying to open file {name}")
+                        print(
+                            ANSI(
+                                f"{RED}Error occurred when trying to open file {name}{RESET}"
+                            ),
+                            file=STDERR,
+                        )
                     s: list[str] = []
                     meta: bool = False
                     with open(name, encoding="utf-8") as file:
@@ -187,7 +193,12 @@ class meta_data_parser:
                 elif line.startswith("%import"):
                     _, name = line.split(maxsplit=2)
                     if not os.path.exists(name):
-                        print(f"Error occurred when trying to open file {name}")
+                        print(
+                            ANSI(
+                                f"{RED}Error occurred when trying to open file {name}{RESET}"
+                            ),
+                            file=STDERR,
+                        )
                     meta: bool = False
                     with open(name, encoding="utf-8") as file:
                         for i in file.readlines():
@@ -200,23 +211,31 @@ class meta_data_parser:
                                 dataa.extend(i)
                 elif line.startswith("%error"):
                     _, content = line.split(maxsplit=2)
-                    print(content.strip("\"'"), file=sys.stderr)
+                    print(ANSI(RED + content.strip("\"'") + RESET), file=STDERR)
                     return False
                 elif line.startswith("%version"):
                     _, version = line.split(maxsplit=1)
                     if safe_int(version) > MACRO_VERSION:
                         if "--omit-macro-version" in flags:
                             print(
-                                "Error! Provided macro uses a higher version, please either upgrade the application, "
-                                "or uses the flag --omit-macro-version!"
+                                ANSI(
+                                    f"{RED}Error! Provided macro uses a higher version, please either upgrade the application, "
+                                    f"or uses the flag --omit-macro-version!{RESET}"
+                                ),
+                                file=STDERR,
                             )
                             return False
                         print(
-                            "Warning! Provided macro uses a higher version, upgrading the application is suggested."
+                            ANSI(
+                                f"{YELLOW}Warning! Provided macro uses a higher version, upgrading the application is suggested.{RESET}"
+                            )
                         )
             except ValueError:
                 print(
-                    f'Error occurred at line {line_num}, macro "{line.split(" ")[0]}" does not have enough parameter'
+                    ANSI(
+                        f'{RED}Error occurred at line {line_num}, macro "{line.split(" ")[0]}" does not have enough parameter{RESET}'
+                    ),
+                    file=STDERR,
                 )
         in_if: int = 0
         touch_end: bool = False
@@ -253,7 +272,12 @@ class meta_data_parser:
                     touch_end = True
                 continue
             if ":" not in _:
-                print(f'Error occurred at line {ln}, separator ":" expected')
+                print(
+                    ANSI(
+                        f'{RED}Error occurred at line {ln}, separator ":" expected{RED}'
+                    ),
+                    file=STDERR,
+                )
                 return False
             command, argument = _.strip().split(":", maxsplit=1)
             self.data[command] += list(
@@ -266,15 +290,25 @@ class meta_data_parser:
         if safe_int(self.data["version"][0][0]) > META_VERSION:
             if "--omit-meta-version" in flags:
                 print(
-                    "Error! Provided meta uses a higher version, please either upgrade the application, "
-                    "or uses the flag --omit-meta-version!"
+                    ANSI(
+                        f"{RED}Error! Provided meta uses a higher version, please either upgrade the application, "
+                        f"or uses the flag --omit-meta-version!{RED}"
+                    ),
+                    file=STDERR,
                 )
                 return False
             print(
-                "Warning! Provided meta uses a higher version, upgrading the application is suggested."
+                ANSI(
+                    f"{YELLOW}Warning! Provided meta uses a higher version, upgrading the application is suggested.{RESET}"
+                )
             )
         if in_if:
-            print(f"Error occurred when pharsing macro, found unclosed if.")
+            print(
+                ANSI(
+                    f"{RED}Error occurred when pharsing macro, found unclosed if.{RESET}"
+                ),
+                file=STDERR,
+            )
         return True
 
     def run_rule(self: meta_data_parser, data: str) -> str:
@@ -297,9 +331,7 @@ class parser:
         with open(path, "r", encoding="utf-8") as file:
             self.iter = (i.rstrip("\n") for i in file.readlines())
 
-    def exec(
-        self,
-    ) -> tuple[
+    def exec(self, flags: list[str] = []) -> tuple[
         tuple[tuple[tuple[str, ...], dict[str, set[tuple[str, ...]]]], ...],
         dict[str, list[tuple[str, ...]]],
     ]:
@@ -313,7 +345,7 @@ class parser:
             if is_meta:
                 if i == "[meta end]":
                     is_meta = False
-                    if not meta_data.meta(i for i in metas):
+                    if not meta_data.meta((i for i in metas), flags):
                         break
                 else:
                     metas.append(i)
@@ -499,7 +531,10 @@ def study(flags: list[str], *args: str) -> return_value:
         if os.path.isfile(i):
             files.append(i)
         else:
-            print(f"File {i} does not exist, skipping", file=sys.stderr)
+            print(
+                ANSI(f"{RED}Error: File {i} does not exist, skipping{RESET}"),
+                file=STDERR,
+            )
     questions: dict[str, answer] = {}
     titles: list[str] = []
     rule: dict[str, set[tuple[str, ...]]] = {}
@@ -510,14 +545,16 @@ def study(flags: list[str], *args: str) -> return_value:
         for name, _rule in rule_temp.items():
             rule.update({name: set(_rule).union(rule.get(name, set()))})
         if not title:
-            print(f"File {i} is not valid, skipping", file=sys.stderr)
+            print(
+                ANSI(f"{RED}Error: File {i} is not valid, skipping{RESET}"), file=STDERR
+            )
             continue
         titles.append(title)
         for dic in _:
             for n in dic[0]:
                 questions.update({n: dic[1]})
     if not questions:
-        print("No valid file found, exiting", file=sys.stderr)
+        print(ANSI(f"{RED}Error: No valid file found, exiting{RESET}"), file=STDERR)
         return result
     question_list: list[str] = list(questions.keys())
     random.shuffle(question_list)
@@ -529,7 +566,10 @@ def study(flags: list[str], *args: str) -> return_value:
     rule["mode"] = set(rule["mode"])
     if len(rule["mode"]) > 1:
         print(
-            f"Error occurred when trying to study with {{{", ".join(args)}}}, found multiple mode. You may only study in one mode at a time."
+            ANSI(
+                f"{RED}Error occurred when trying to study with {{{", ".join(args)}}}, found multiple mode. You may only study in one mode at a time.{RESET}"
+            ),
+            file=STDERR,
         )
         return result
     MODE: str = rule["mode"].pop()[0] if rule["mode"] else ""
@@ -896,7 +936,12 @@ def look_up(flags: list[str], *args: str) -> return_value:
         return result
     res: dict[str, str] = {}
     if not os.path.exists(args[1]):
-        print(f"Error occurred when trying to read file {args[1]}, not found.")
+        print(
+            ANSI(
+                f"{RED}Error occurred when trying to read file {args[1]}, not found.{RESET}"
+            ),
+            file=STDERR,
+        )
         return result
     with open(args[1], encoding="utf-8") as file:
         for word in file.readlines()[1:]:
@@ -933,8 +978,11 @@ def look_up(flags: list[str], *args: str) -> return_value:
             res[word] = defs[ins]["definitions"][0]["definition"]
     if os.path.exists(args[1] + ".dtb") and not ("-f" in flags or "--force" in flags):
         print(
-            f"Error occurred when trying to write to file {args[1]}.dtb, please use -f or --force to force overwrite, or "
-            "change the name of the existed file"
+            ANSI(
+                f"{RED}Error occurred when trying to write to file {args[1]}.dtb, please use -f or --force to force overwrite, or "
+                f"change the name of the existed file{RESET}"
+            ),
+            file=STDERR,
         )
     if "-f" in flags or "--force" in flags:
         with open(args[1] + ".dtb", "w", encoding="utf-8") as file:
@@ -956,7 +1004,12 @@ def look_up(flags: list[str], *args: str) -> return_value:
 def meta(flags: list[str], *args: str) -> return_value:
     result: return_value = return_value(exit=False, try_again=False)
     if not os.path.exists(args[1]):
-        print(f"Error occurred when trying to open file {args[1]}, not found.")
+        print(
+            ANSI(
+                f"{RED}Error occurred when trying to open file {args[1]}, not found.{RESET}"
+            ),
+            file=STDERR,
+        )
     if "-c" in flags or "--check" in flags:
         checker: meta_data_parser = meta_data_parser()
         r: list[str] = []
@@ -970,7 +1023,7 @@ def meta(flags: list[str], *args: str) -> return_value:
                     meta = False
                 if meta:
                     r.append(i)
-        checker.meta(i for i in r)
+        checker.meta((i for i in r), flags)
         return result
     pin: int = 0
     with open(args[1], "a+", encoding="utf-8") as file:
@@ -1099,6 +1152,7 @@ RESET = "\033[0m"
 GREEN = "\033[32m"
 YELLOW = "\033[33m"
 BLUE = "\033[34m"
+RED = "\033[31m"
 working_dir: str = shrinkuser(os.getcwd())
 prompt = f"{BOLD}{GREEN}{username}{RESET}{BOLD}:{BLUE}{working_dir}{YELLOW} $ {RESET}"
 
