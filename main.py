@@ -513,6 +513,8 @@ def study(flags: list[str], *args: str) -> return_value:
     most_question: str = ""
     most_time: float = 0
     break_through: bool = False
+    timeout_interrupt: int = 0
+    skip: int = 0
     for i in question_list:
         if break_through:
             break
@@ -570,6 +572,7 @@ def study(flags: list[str], *args: str) -> return_value:
             if MAGIC_STRINGS["skip"] in answer:
                 print("Skip magic string detected, skipping...")
                 trying = 0
+                skip += 1
                 break
             trying -= 1
             print("You're wrong! Please try again.")
@@ -583,6 +586,7 @@ def study(flags: list[str], *args: str) -> return_value:
                     f"study! Don't PRETEND to study. You've used too much time ({end} sec)"
                 )
                 break_through = True
+                skip += 1
             if trying == 0:
                 print(
                     "You've ran out of chances! The correct answers are: ",
@@ -607,6 +611,7 @@ def study(flags: list[str], *args: str) -> return_value:
                     f"study! Don't PRETEND to study. You've used too much time ({end} sec)"
                 )
                 break_through = True
+                skip += 1
             time_module.sleep(0.1)
             continue
         end: float = time_module.time() - start
@@ -619,10 +624,13 @@ def study(flags: list[str], *args: str) -> return_value:
     print(f"Time consumed: {time_consumed:.2f}")
     print(f"Average time per question: {time_consumed/done_question:.2f}")
     print(f"Question that used most time: {most_question} in {most_time:.2f} sec")
+    print(f"Timeout interrupted questions: {timeout_interrupt}")
+    print(f"Skipped questions: {skip}")
     wrong_list: set[tuple[str, str, int]] = set()
+    print("Wrong Question: ")
     for question, answer, time in status_list:
         if time < GLOBALS["chances"]:
-            print(f"{question}[{time}]")
+            print(f"  {question}[{time}]")
             wrong_list.add((question, answer, time))
     if "--export-wrong" in flags:
         for i in args[1:]:
