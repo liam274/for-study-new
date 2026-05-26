@@ -147,7 +147,7 @@ class meta_data_parser:
             "include": [],
         }
 
-    def meta(self: meta_data_parser, data: Iterator[str]):
+    def meta(self: meta_data_parser, data: Iterator[str]) -> bool:
         macro: dict[str, str] = {}
         data, data2 = itertools.tee(data)
         dataa: ExtendableIterator[str] = ExtendableIterator(data)
@@ -190,6 +190,10 @@ class meta_data_parser:
                                 meta = False
                             if meta:
                                 dataa.extend(i)
+                elif line.startswith("%error"):
+                    _, content = line.split(maxsplit=2)
+                    print(content.strip("\"'"), file=sys.stderr)
+                    return False
             except ValueError:
                 print(
                     f'Error occurred at line {line_num}, macro "{line.split(" ")[0]}" does not have enough parameter'
@@ -207,7 +211,7 @@ class meta_data_parser:
                     if touch == 0:
                         touch_end = False
                 elif testie[0] == "%else":
-                    if touch < 2:
+                    if touch < 22:
                         touch = 0
                         touch_end = False
                         in_if += 1
@@ -230,13 +234,14 @@ class meta_data_parser:
                 continue
             if ":" not in _:
                 print(f'Error occurred at line {ln}, separator ":" expected')
-                return
+                return False
             command, argument = _.strip().split(":", maxsplit=1)
             self.data[command] += list(
                 tuple(macro.get(i, i).split("^")) for i in modify[command](argument)
             )
         if in_if:
             print(f"Error occurred when pharsing macro, found unclosed if.")
+        return True
 
     def run_rule(self: meta_data_parser, data: str) -> str:
         for rule in self.data["dismiss"]:
@@ -274,7 +279,8 @@ class parser:
             if is_meta:
                 if i == "[meta end]":
                     is_meta = False
-                    meta_data.meta(i for i in metas)
+                    if not meta_data.meta(i for i in metas):
+                        break
                 else:
                     metas.append(i)
                 continue
