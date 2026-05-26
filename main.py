@@ -38,7 +38,7 @@ from ubelt import shrinkuser  # type: ignore
 import time as time_module
 
 SPECIAL_CHARS: str = "~:"
-MAGIC_STRINGS: dict[str, str] = {"exit": "35c4p3d", "pause": "p4u53"}
+MAGIC_STRINGS: dict[str, str] = {"exit": "35c4p3d", "pause": "p4u53", "skip": "5k1p"}
 trues: tuple[str, ...] = ("y", "yes", "true")
 PATH: str = os.getcwd()
 
@@ -567,6 +567,10 @@ def study(flags: list[str], *args: str) -> return_value:
                 time_consumed = time_module.time() - time_start_stamp
                 input("Press enter to resume>> ")
                 time_start_stamp = time_module.time()
+            if MAGIC_STRINGS["skip"] in answer:
+                print("Skip magic string detected, skipping...")
+                trying = 0
+                break
             trying -= 1
             print("You're wrong! Please try again.")
             if (end := time_module.time() - start) > min(
