@@ -660,7 +660,7 @@ def study(flags: list[str], *args: str) -> return_value:
                     f"study! Don't PRETEND to study. You've used too much time ({end} sec)"
                 )
                 break_through = True
-                skip += 1
+                timeout_interrupt += 1
             if trying == 0:
                 print(
                     "You've ran out of chances! The correct answers are: ",
@@ -685,7 +685,7 @@ def study(flags: list[str], *args: str) -> return_value:
                     f"study! Don't PRETEND to study. You've used too much time ({end} sec)"
                 )
                 break_through = True
-                skip += 1
+                timeout_interrupt += 1
             time_module.sleep(0.1)
             continue
         end: float = time_module.time() - start
