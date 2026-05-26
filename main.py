@@ -935,10 +935,10 @@ def rm(flags: list[str], *args: str) -> return_value:
         return result
     for path in args[1:]:
         if os.path.isdir(path):
-            print(f"{path} is a directory")
+            print(f'"{path}" is a directory')
             return result
         if not os.path.isfile(path):
-            print(f"{path} does not exist")
+            print(f'"{path}" does not exist')
             return result
         answer = (
             input(f'Are you sure you want to delete file "{path}"? (y/n) ')
