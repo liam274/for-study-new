@@ -129,6 +129,7 @@ modify: dict[str, Callable[[str], Iterator[str]]] = {
     "define": basic,
     "include": basic,
     "version": basic,
+    "time-limit": basic,
 }
 
 META_VERSION: int = 1
@@ -144,6 +145,7 @@ class meta_data_parser:
             "define": [],
             "include": [],
             "version": [],
+            "time-limit": [],
         }
         self.default: dict[str, tuple[str, ...]] = {"version": (str(META_VERSION),)}
 
