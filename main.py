@@ -159,6 +159,8 @@ class meta_data_parser:
         touch_end: bool = False
         touch: int = 0
         parent_touch_end: bool = False
+        included: set[str] = set()
+        imported: set[str] = set()
         for line_num, line in enumerate(dataa):
             if line[0] != "%":
                 continue
@@ -199,8 +201,15 @@ class meta_data_parser:
                     _, name = line.split(maxsplit=1)
                     if not os.path.isfile(name):
                         print(
-                            f"{RED}Error occurred when trying to open file {name}{RESET}"
+                            f'{RED}Error occurred when trying to open file "{name}"{RESET}'
                         )
+                        return False
+                    if name in included:
+                        print(
+                            f'{RED}Error occurred when trying to include file "{name}", recursive including occurrs{RESET}'
+                        )
+                        return False
+                    included.add(name)
                     s: list[str] = []
                     meta: bool = False
                     with open(name, encoding="utf-8") as file:
@@ -217,8 +226,15 @@ class meta_data_parser:
                     _, name = line.split(maxsplit=1)
                     if not os.path.isfile(name):
                         print(
-                            f"{RED}Error occurred when trying to open file {name}{RESET}"
+                            f'{RED}Error occurred when trying to open file "{name}"{RESET}'
                         )
+                        return False
+                    if name in imported:
+                        print(
+                            f'{RED}Error occurred when trying to import file "{name}", recursive including occurrs{RESET}'
+                        )
+                        return False
+                    imported.add(name)
                     meta: bool = False
                     with open(name, encoding="utf-8") as file:
                         for i in file.readlines():
