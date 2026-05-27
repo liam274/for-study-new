@@ -1301,4 +1301,6 @@ if __name__ == "__main__":
     print(
         f"Hello from study terminal! Type {GREEN}'help'{RESET} for available commands."
     )
+    if os.path.isfile(".studyrc"):
+        bash([], ".studyrc")
     executor()
