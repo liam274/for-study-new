@@ -693,7 +693,7 @@ def study(flags: list[str], *args: str) -> return_value:
                 return result
             if MAGIC_STRINGS["pause"] in answer:
                 print("Pause magic string detected, paused...")
-                time_consumed = time_module.time() - time_start_stamp
+                time_consumed += time_module.time() - time_start_stamp
                 input("Press enter to resume>> ")
                 time_start_stamp = time_module.time()
             if MAGIC_STRINGS["skip"] in answer:
@@ -755,6 +755,7 @@ def study(flags: list[str], *args: str) -> return_value:
             print("Time's up!")
             break_through = True
         status_list.add((i, "~".join(sets), trying))
+    time_consumed += time_module.time() - time_start_stamp
     clear()
     print("Study stat: ")
     print(f"Time consumed: {time_consumed:.2f}")
