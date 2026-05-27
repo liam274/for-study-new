@@ -182,6 +182,8 @@ class meta_data_parser:
                             touch = 0
                             touch_end = False
                             in_if += 1
+                            if len(testie) < 3:
+                                continue
                             if testie[1] == "%ifdef":
                                 if testie[2] not in macro:
                                     touch_end = True
