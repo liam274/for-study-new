@@ -799,7 +799,9 @@ def cd(flags: list[str], *args: str) -> return_value:
     global working_dir, prompt
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
-        print("No path provided")
+        working_dir = "~"
+        os.chdir(os.path.expanduser("~"))
+        prompt = f"{BOLD}{GREEN}{username}{RESET}{BOLD}:{BLUE}{working_dir}{YELLOW} $ {RESET}"
         return result
     if not os.path.isdir(args[1]):
         print(f"{args[1]} is not a directory")
