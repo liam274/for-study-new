@@ -610,6 +610,7 @@ def study(flags: list[str], *args: str) -> return_value:
             time_module.sleep(1)
             print("\r\033[K", end="")
             time_module.sleep(1)
+    TIME_LIMIT: int = safe_int(rule["time-limit"].pop()[0]) if rule["time-limit"] else float("inf")  # type: ignore
     DO_WRONG: bool = "--do-wrong" in flags
     chances: int = GLOBALS["chances"]
     time_consumed: float = 0
@@ -620,7 +621,8 @@ def study(flags: list[str], *args: str) -> return_value:
     break_through: bool = False
     timeout_interrupt: int = 0
     skip: int = 0
-    for i in question_list:
+    t: int = 0
+    for t, i in enumerate(question_list):
         if break_through:
             break
         if DO_WRONG and i not in flags:
@@ -692,6 +694,9 @@ def study(flags: list[str], *args: str) -> return_value:
                 )
                 break_through = True
                 timeout_interrupt += 1
+            if end > TIME_LIMIT:
+                print("Time's up!")
+                break_through = True
             if trying == 0:
                 print(
                     "You've ran out of chances! The correct answers are: ",
@@ -717,18 +722,26 @@ def study(flags: list[str], *args: str) -> return_value:
                 )
                 break_through = True
                 timeout_interrupt += 1
+            if end > TIME_LIMIT:
+                print("Time's up!")
+                break_through = True
             time_module.sleep(0.1)
             continue
         end: float = time_module.time() - start
         if end > most_time:
             most_question = i
             most_time = end
+        if end > TIME_LIMIT:
+            print("Time's up!")
+            break_through = True
         status_list.add((i, "~".join(sets), trying))
     clear()
     print("Study stat: ")
     print(f"Time consumed: {time_consumed:.2f}")
     print(f"Average time per question: {time_consumed/done_question:.2f}")
     print(f"Question that used most time: {most_question} in {most_time:.2f} sec")
+    if MODE == "timed":
+        timeout_interrupt += len(question_list) - t
     print(f"Timeout interrupted questions: {timeout_interrupt}")
     print(f"Skipped questions: {skip}")
     wrong_list: set[tuple[str, str, int]] = set()
