@@ -583,9 +583,13 @@ def safe_int(data: str) -> int:
 
 def confirm_input(prompt: str) -> str:
     result: str
+    ans: str
     while result := input(prompt):
-        if input("Are you sure?").strip() in trues:
+        if (ans := input("Are you sure?").strip()) in trues:
             break
+        if ans == MAGIC_STRINGS["exit"]:
+            print("Action Cancled")
+            return ""
     return result
 
 
@@ -1031,13 +1035,17 @@ def look_up(flags: list[str], *args: str) -> return_value:
                 if word == MAGIC_STRINGS["exit"]:
                     break
                 if word == MAGIC_STRINGS["manual"]:
-                    defs = [confirm_input("Please enter definition")]
+                    res[word] = confirm_input("Please enter definition >> ")
+                    continue
                 while "title" in (result_ := fetch(DEFAULT_URL + word.strip())):
                     word = input("Word not found, please correct >> ")
                     if word == MAGIC_STRINGS["exit"]:
                         return result
                     if word == MAGIC_STRINGS["manual"]:
-                        defs = [confirm_input("Please enter definition")]
+                        res[word] = confirm_input("Please enter definition >> ")
+                        break
+                else:
+                    continue
             defs = result_[0]["meanings"]
             ins: int = 0
             while 1:
@@ -1060,6 +1068,8 @@ def look_up(flags: list[str], *args: str) -> return_value:
                     word = input("Please correct >> ")
                     if word == MAGIC_STRINGS["exit"]:
                         return result
+                    if word == MAGIC_STRINGS["manual"]:
+                        res[word] = confirm_input("Please enter definition >> ")
                     continue
                 break
             res[word] = defs[ins]["definitions"][0]["definition"]
