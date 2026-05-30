@@ -991,6 +991,8 @@ DEFAULT_URL: str = "https://api.dictionaryapi.dev/api/v2/entries/en/"
 
 def look_up(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
+    if len(args) < 2:
+        return result
     if not os.path.isfile(args[1]) and ("-w" in flags or "--word" in flags):
         for word in args[1:]:
             defs = fetch(DEFAULT_URL + word)[0]["meanings"]
@@ -1011,8 +1013,10 @@ def look_up(flags: list[str], *args: str) -> return_value:
         for word in file.readlines()[1:]:
             print(word)
             result_ = fetch(DEFAULT_URL + word.strip())
-            if len(result_) == 0:
+            if "title" in result_:
+                print("Word not found, skipping...")
                 continue
+            print(result_)
             defs = result_[0]["meanings"]
             ins: int = 0
             while 1:
