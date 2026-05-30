@@ -581,7 +581,7 @@ def safe_int(data: str) -> int:
     return 0
 
 
-def confirm_input(prompt: str) -> str:
+def confirm_input(prompt: str, no_strip: bool = False) -> str:
     result: str
     ans: str
     while result := input(prompt):
@@ -590,7 +590,7 @@ def confirm_input(prompt: str) -> str:
         if ans == MAGIC_STRINGS["exit"]:
             print("Action Cancled")
             return ""
-    return result
+    return result if no_strip else result.strip()
 
 
 # main function
@@ -1038,7 +1038,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
                     res[word] = confirm_input("Please enter definition >> ")
                     continue
                 while "title" in (result_ := fetch(DEFAULT_URL + word)):
-                    word = input(f'Word "{word}" not found, please correct >> ')
+                    word = input(f'Word "{word}" not found, please correct >> ').strip()
                     if word == MAGIC_STRINGS["exit"]:
                         return result
                     if word == MAGIC_STRINGS["manual"]:
@@ -1101,11 +1101,11 @@ def look_up(flags: list[str], *args: str) -> return_value:
         with open(args[1] + ".dtb", "w", encoding="utf-8") as file:
             pass
     with open(args[1] + ".dtb", "a", encoding="utf-8") as file:
-        file.write(input("title? ") + "\n")
-        if input("write meta data?") in trues:
+        file.write(input("title? ").strip() + "\n")
+        if input("write meta data?").strip() in trues:
             file.write("[meta start]\n")
             inp: str
-            while (inp := input("meta data >> ")) != "END META":
+            while (inp := input("meta data >> ").strip()) != "END META":
                 file.write(inp + "\n")
             file.write("[meta end]\n")
         for word, definition in res.items():
@@ -1142,7 +1142,7 @@ def meta(flags: list[str], *args: str) -> return_value:
                 pin += file.tell()
                 break
         file.seek(pin)
-        while (inp := input("meta data >> ")) != "META_END":
+        while (inp := input("meta data >> ").strip()) != "META_END":
             file.write(inp + "\n")
     return result
 
@@ -1159,7 +1159,7 @@ def merge(flags: list[str], *args: str) -> return_value:
                 it = (i for i in file.readlines()[1:])
             else:
                 it = itertools.chain(it, (i for i in file.readlines()[1:]))
-    path: str = input("output file >> ")
+    path: str = input("output file >> ").strip()
     if os.path.isfile(path):
         if (
             input("File overlapped. Clear? ").strip().lower() in trues
@@ -1327,7 +1327,7 @@ def executor() -> None:
                     history=history,
                     completer=completer,
                     complete_while_typing=True,
-                )
+                ).strip()
             )
             if not pre_command:
                 continue
