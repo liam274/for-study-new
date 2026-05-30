@@ -1065,12 +1065,12 @@ def look_up(flags: list[str], *args: str) -> return_value:
                                 return result
                             if t == MAGIC_STRINGS["manual"]:
                                 res[word] = confirm_input("Please enter definition >> ")
-                                defs.clear()
-                                break
+                                if res[word]:
+                                    defs.clear()
+                                    break
                             print("Given value is not expected!")
                 elif len(defs):
                     print("Found one definition only, picking the first one...")
-                    break
                 else:
                     print(f'Word "{word}" not found.')
                     word = input("Please correct >> ")
