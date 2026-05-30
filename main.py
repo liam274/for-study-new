@@ -1048,8 +1048,6 @@ def look_up(flags: list[str], *args: str) -> return_value:
             defs = result_[0]["meanings"]
             ins: int = 0
             while 1:
-                defs = fetch(DEFAULT_URL + word.strip())[0]["meanings"]
-                ins = 0
                 if len(defs) > 1:
                     for i, entry in enumerate(defs):
                         print(
@@ -1057,7 +1055,8 @@ def look_up(flags: list[str], *args: str) -> return_value:
                         )
                     if not ("-a" in flags or "--auto" in flags):
                         t: str
-                        while t := input("Choose one >>").strip():
+                        while 1:
+                            t = input("Choose one >>").strip()
                             if t == MAGIC_STRINGS["exit"]:
                                 return result
                             if t == MAGIC_STRINGS["manual"]:
@@ -1079,6 +1078,8 @@ def look_up(flags: list[str], *args: str) -> return_value:
                         return result
                     if word == MAGIC_STRINGS["manual"]:
                         res[word] = confirm_input("Please enter definition >> ")
+                    defs = fetch(DEFAULT_URL + word.strip())[0]["meanings"]
+                    ins = 0
                     continue
                 break
             if len(defs):
