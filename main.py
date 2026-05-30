@@ -1027,7 +1027,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
             print(word)
             result_ = fetch(DEFAULT_URL + word.strip())
             if "title" in result_:
-                word = input("Word not found, please correct>> ")
+                word = input("Word not found, please correct >> ")
                 if word == MAGIC_STRINGS["exit"]:
                     break
                 if word == MAGIC_STRINGS["manual"]:
