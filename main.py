@@ -1016,7 +1016,6 @@ def look_up(flags: list[str], *args: str) -> return_value:
             if "title" in result_:
                 print("Word not found, skipping...")
                 continue
-            print(result_)
             defs = result_[0]["meanings"]
             ins: int = 0
             while 1:
