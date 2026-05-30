@@ -1057,10 +1057,18 @@ def look_up(flags: list[str], *args: str) -> return_value:
                             f"{i+1}. ({entry["partOfSpeech"]}) {entry["definitions"][0]["definition"]}"
                         )
                     if not ("-a" in flags or "--auto" in flags):
-                        while (ins := (safe_int(input("Choose one >>")) - 1)) and (
-                            ins < 0 or ins >= len(defs)
+                        t: str
+                        while (
+                            (t := input("Choose one >>"))
+                            and (t not in MAGIC_STRINGS)
+                            and (ins := safe_int(t) - 1)
+                            and (ins < 0 or ins >= len(defs))
                         ):
                             print("Given value is not expected!")
+                        if t == MAGIC_STRINGS["exit"]:
+                            return result
+                        if t == MAGIC_STRINGS["manual"]:
+                            res[word] = confirm_input("Please enter definition >> ")
                 elif len(defs):
                     print("Found one definition only, picking the first one...")
                 else:
