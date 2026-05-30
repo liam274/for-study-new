@@ -1079,8 +1079,26 @@ def look_up(flags: list[str], *args: str) -> return_value:
                     if word == MAGIC_STRINGS["manual"]:
                         res[word] = confirm_input("Please enter definition >> ")
                         break
-                    defs = fetch(DEFAULT_URL + word.strip())[0]["meanings"]
-                    ins = 0
+                    result_ = fetch(DEFAULT_URL + word.strip())
+                    if "title" in result_:
+                        word = input("Word not found, please correct >> ").strip()
+                        if word == MAGIC_STRINGS["exit"]:
+                            break
+                        if word == MAGIC_STRINGS["manual"]:
+                            res[word] = confirm_input("Please enter definition >> ")
+                            continue
+                        while "title" in (result_ := fetch(DEFAULT_URL + word)):
+                            word = input(f'Word "{word}" not found, please correct >> ')
+                            if word == MAGIC_STRINGS["exit"]:
+                                return result
+                            if word == MAGIC_STRINGS["manual"]:
+                                res[word] = confirm_input("Please enter definition >> ")
+                                break
+                        else:
+                            defs = result_[0]["meanings"]
+                            continue
+                        break
+                    defs = result_[0]["meanings"]
                     continue
                 break
             if len(defs):
