@@ -38,7 +38,12 @@ from ubelt import shrinkuser  # type: ignore
 import time as time_module
 
 SPECIAL_CHARS: str = "~:"
-MAGIC_STRINGS: dict[str, str] = {"exit": "35c4p3d", "pause": "p4u53", "skip": "5k1p"}
+MAGIC_STRINGS: dict[str, str] = {
+    "exit": "35c4p3d",
+    "pause": "p4u53",
+    "skip": "5k1p",
+    "manual": "m4nu41",
+}
 trues: tuple[str, ...] = ("y", "yes", "true")
 PATH: str = os.getcwd()
 STDERR: TextIO = sys.stderr
@@ -576,6 +581,14 @@ def safe_int(data: str) -> int:
     return 0
 
 
+def confirm_input(prompt: str) -> str:
+    result: str
+    while result := input(prompt):
+        if input("Are you sure?").strip() in trues:
+            break
+    return result
+
+
 # main function
 def unknown(flags: list[str], *args: str) -> return_value:
     print("Unknown command:", args[0])
@@ -1014,8 +1027,17 @@ def look_up(flags: list[str], *args: str) -> return_value:
             print(word)
             result_ = fetch(DEFAULT_URL + word.strip())
             if "title" in result_:
-                print("Word not found, skipping...")
-                continue
+                word = input("Word not found, please correct>> ")
+                if word == MAGIC_STRINGS["exit"]:
+                    break
+                if word == MAGIC_STRINGS["manual"]:
+                    defs = [confirm_input("Please enter definition")]
+                while "title" in (result_ := fetch(DEFAULT_URL + word.strip())):
+                    word = input("Word not found, please correct >> ")
+                    if word == MAGIC_STRINGS["exit"]:
+                        return result
+                    if word == MAGIC_STRINGS["manual"]:
+                        defs = [confirm_input("Please enter definition")]
             defs = result_[0]["meanings"]
             ins: int = 0
             while 1:
@@ -1027,19 +1049,17 @@ def look_up(flags: list[str], *args: str) -> return_value:
                             f"{i+1}. ({entry["partOfSpeech"]}) {entry["definitions"][0]["definition"]}"
                         )
                     if not ("-a" in flags or "--auto" in flags):
-                        while (
-                            (ins := (int(input("Choose one >>")) - 1))
-                            and ins < 0
-                            and ins >= len(defs)
+                        while (ins := (safe_int(input("Choose one >>")) - 1)) and (
+                            ins < 0 or ins >= len(defs)
                         ):
-                            pass
+                            print("Given value is not expected!")
                 elif len(defs):
                     print("Found one definition only, picking the first one...")
                 else:
                     print(f'Word "{word}" not found.')
                     word = input("Please correct >> ")
                     if word == MAGIC_STRINGS["exit"]:
-                        break
+                        return result
                     continue
                 break
             res[word] = defs[ins]["definitions"][0]["definition"]
