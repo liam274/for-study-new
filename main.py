@@ -1061,16 +1061,18 @@ def look_up(flags: list[str], *args: str) -> return_value:
                         while (
                             (t := input("Choose one >>"))
                             and (t not in MAGIC_STRINGS)
-                            and (ins := safe_int(t) - 1)
-                            and (ins < 0 or ins >= len(defs))
+                            and ((ins := safe_int(t) - 1) < 0 or ins >= len(defs))
                         ):
                             print("Given value is not expected!")
                         if t == MAGIC_STRINGS["exit"]:
                             return result
                         if t == MAGIC_STRINGS["manual"]:
                             res[word] = confirm_input("Please enter definition >> ")
+                            defs.clear()
+                            break
                 elif len(defs):
                     print("Found one definition only, picking the first one...")
+                    break
                 else:
                     print(f'Word "{word}" not found.')
                     word = input("Please correct >> ")
@@ -1080,7 +1082,8 @@ def look_up(flags: list[str], *args: str) -> return_value:
                         res[word] = confirm_input("Please enter definition >> ")
                     continue
                 break
-            res[word] = defs[ins]["definitions"][0]["definition"]
+            if len(defs):
+                res[word] = defs[ins]["definitions"][0]["definition"]
     if os.path.isfile(args[1] + ".dtb") and not ("-f" in flags or "--force" in flags):
         print(
             f"{RED}Error occurred when trying to write to file {args[1]}.dtb, please use -f or --force to force overwrite, or "
