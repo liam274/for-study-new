@@ -1031,14 +1031,14 @@ def look_up(flags: list[str], *args: str) -> return_value:
             print(word)
             result_ = fetch(DEFAULT_URL + word.strip())
             if "title" in result_:
-                word = input("Word not found, please correct >> ")
+                word = input("Word not found, please correct >> ").strip()
                 if word == MAGIC_STRINGS["exit"]:
                     break
                 if word == MAGIC_STRINGS["manual"]:
                     res[word] = confirm_input("Please enter definition >> ")
                     continue
-                while "title" in (result_ := fetch(DEFAULT_URL + word.strip())):
-                    word = input("Word not found, please correct >> ")
+                while "title" in (result_ := fetch(DEFAULT_URL + word)):
+                    word = input(f'Word "{word}" not found, please correct >> ')
                     if word == MAGIC_STRINGS["exit"]:
                         return result
                     if word == MAGIC_STRINGS["manual"]:
@@ -1049,7 +1049,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
             ins: int = 0
             while 1:
                 defs = fetch(DEFAULT_URL + word.strip())[0]["meanings"]
-                ins: int = 0
+                ins = 0
                 if len(defs) > 1:
                     for i, entry in enumerate(defs):
                         print(
@@ -1074,7 +1074,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
                     print("Found one definition only, picking the first one...")
                 else:
                     print(f'Word "{word}" not found.')
-                    word = input("Please correct >> ")
+                    word = input("Please correct >> ").strip()
                     if word == MAGIC_STRINGS["exit"]:
                         return result
                     if word == MAGIC_STRINGS["manual"]:
