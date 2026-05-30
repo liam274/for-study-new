@@ -1044,8 +1044,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
                     if word == MAGIC_STRINGS["manual"]:
                         res[word] = confirm_input("Please enter definition >> ")
                         break
-                else:
-                    continue
+                continue
             defs = result_[0]["meanings"]
             ins: int = 0
             while 1:
