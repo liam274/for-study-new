@@ -1067,8 +1067,9 @@ def look_up(flags: list[str], *args: str) -> return_value:
                                     break
                             ins = safe_int(t) - 1
                             if ins < 0 or ins >= len(defs):
+                                print("Given value is not expected!")
                                 continue
-                            print("Given value is not expected!")
+                            break
                 elif len(defs):
                     print("Found one definition only, picking the first one...")
                 else:
