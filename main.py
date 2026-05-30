@@ -1058,9 +1058,6 @@ def look_up(flags: list[str], *args: str) -> return_value:
                     if not ("-a" in flags or "--auto" in flags):
                         t: str
                         while t := input("Choose one >>").strip():
-                            ins = safe_int(t) - 1
-                            if ins < 0 or ins >= len(defs):
-                                continue
                             if t == MAGIC_STRINGS["exit"]:
                                 return result
                             if t == MAGIC_STRINGS["manual"]:
@@ -1068,6 +1065,9 @@ def look_up(flags: list[str], *args: str) -> return_value:
                                 if res[word]:
                                     defs.clear()
                                     break
+                            ins = safe_int(t) - 1
+                            if ins < 0 or ins >= len(defs):
+                                continue
                             print("Given value is not expected!")
                 elif len(defs):
                     print("Found one definition only, picking the first one...")
