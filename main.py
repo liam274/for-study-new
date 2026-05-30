@@ -1078,6 +1078,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
                         return result
                     if word == MAGIC_STRINGS["manual"]:
                         res[word] = confirm_input("Please enter definition >> ")
+                        break
                     defs = fetch(DEFAULT_URL + word.strip())[0]["meanings"]
                     ins = 0
                     continue
