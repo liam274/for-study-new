@@ -739,6 +739,7 @@ def study(flags: list[str], *args: str) -> return_value:
                     "You've ran out of chances! The correct answers are: ",
                     " and ".join(sets),
                 )
+                getchar("Press to continue >>")
                 break
         else:
             print("Correct!")
@@ -762,7 +763,7 @@ def study(flags: list[str], *args: str) -> return_value:
             if end > TIME_LIMIT:
                 print("Time's up!")
                 break_through = True
-            time_module.sleep(0.1)
+            time_module.sleep(0.2)
             continue
         end: float = time_module.time() - start
         if end > most_time:
