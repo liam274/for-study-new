@@ -699,6 +699,7 @@ def study(flags: list[str], *args: str) -> return_value:
         trying: int = (
             safe_int(specific_rules.get("chance", set("0")).pop()[0]) or chances
         )
+        ori_trying: int = trying
         start: float = time_module.time()
         while (
             answer := set(i.strip() for i in input(qer, history=history).split("+"))
@@ -772,7 +773,7 @@ def study(flags: list[str], *args: str) -> return_value:
         if end > TIME_LIMIT:
             print("Time's up!")
             break_through = True
-        status_list.add((i, "~".join(sets), trying))
+        status_list.add((i, "~".join(sets), ori_trying - trying))
     time_consumed += time_module.time() - time_start_stamp
     clear()
     print("Study stat: ")
