@@ -1055,7 +1055,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
                     if _word == MAGIC_STRINGS["exit"]:
                         return result
                     if _word == MAGIC_STRINGS["manual"]:
-                        res[_word] = confirm_input("Please enter definition >> ")
+                        res[word] = confirm_input("Please enter definition >> ")
                         break
                 continue
             defs = result_[0]["meanings"]
@@ -1090,7 +1090,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
                     if _word == MAGIC_STRINGS["exit"]:
                         return result
                     if _word == MAGIC_STRINGS["manual"]:
-                        res[_word] = confirm_input("Please enter definition >> ")
+                        res[word] = confirm_input("Please enter definition >> ")
                         break
                     result_ = fetch(DEFAULT_URL + _word.strip())
                     if "title" in result_:
@@ -1098,7 +1098,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
                         if _word == MAGIC_STRINGS["exit"]:
                             return result
                         if _word == MAGIC_STRINGS["manual"]:
-                            res[_word] = confirm_input("Please enter definition >> ")
+                            res[word] = confirm_input("Please enter definition >> ")
                             break
                     defs = result_[0]["meanings"]
                     continue
