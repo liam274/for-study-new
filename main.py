@@ -1039,20 +1039,23 @@ def look_up(flags: list[str], *args: str) -> return_value:
         title = _[0].strip()
         for word in _[1:]:
             print(word)
+            _word: str = ""
             result_ = fetch(DEFAULT_URL + word.strip())
             if "title" in result_:
-                word = input("Word not found, please correct >> ").strip()
-                if word == MAGIC_STRINGS["exit"]:
+                _word = input("Word not found, please correct >> ").strip()
+                if _word == MAGIC_STRINGS["exit"]:
                     return result
-                if word == MAGIC_STRINGS["manual"]:
+                if _word == MAGIC_STRINGS["manual"]:
                     res[word] = confirm_input("Please enter definition >> ")
                     continue
-                while "title" in (result_ := fetch(DEFAULT_URL + word)):
-                    word = input(f'Word "{word}" not found, please correct >> ').strip()
-                    if word == MAGIC_STRINGS["exit"]:
+                while "title" in (result_ := fetch(DEFAULT_URL + _word)):
+                    _word = input(
+                        f'Word "{_word}" not found, please correct >> '
+                    ).strip()
+                    if _word == MAGIC_STRINGS["exit"]:
                         return result
-                    if word == MAGIC_STRINGS["manual"]:
-                        res[word] = confirm_input("Please enter definition >> ")
+                    if _word == MAGIC_STRINGS["manual"]:
+                        res[_word] = confirm_input("Please enter definition >> ")
                         break
                 continue
             defs = result_[0]["meanings"]
@@ -1083,25 +1086,25 @@ def look_up(flags: list[str], *args: str) -> return_value:
                     print("Found one definition only, picking the first one...")
                 else:
                     print(f'Word "{word}" not found.')
-                    word = input("Please correct >> ").strip()
-                    if word == MAGIC_STRINGS["exit"]:
+                    _word = input("Please correct >> ").strip()
+                    if _word == MAGIC_STRINGS["exit"]:
                         return result
-                    if word == MAGIC_STRINGS["manual"]:
-                        res[word] = confirm_input("Please enter definition >> ")
+                    if _word == MAGIC_STRINGS["manual"]:
+                        res[_word] = confirm_input("Please enter definition >> ")
                         break
-                    result_ = fetch(DEFAULT_URL + word.strip())
+                    result_ = fetch(DEFAULT_URL + _word.strip())
                     if "title" in result_:
-                        word = input("Word not found, please correct >> ").strip()
-                        if word == MAGIC_STRINGS["exit"]:
+                        _word = input("Word not found, please correct >> ").strip()
+                        if _word == MAGIC_STRINGS["exit"]:
                             return result
-                        if word == MAGIC_STRINGS["manual"]:
-                            res[word] = confirm_input("Please enter definition >> ")
+                        if _word == MAGIC_STRINGS["manual"]:
+                            res[_word] = confirm_input("Please enter definition >> ")
                             break
                     defs = result_[0]["meanings"]
                     continue
                 break
             if len(defs):
-                res[word] = defs[ins]["definitions"][0]["definition"]
+                res[_word or word] = defs[ins]["definitions"][0]["definition"]
     if os.path.isfile(args[1] + ".dtb") and not ("-f" in flags or "--force" in flags):
         print(
             f'{RED}Error occurred when trying to write to file "{args[1]}.dtb", please use -f or --force to force overwrite, or '
