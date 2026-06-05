@@ -706,6 +706,8 @@ def study(flags: list[str], *args: str) -> return_value:
         ) != sets:
             if break_through:
                 break
+            if len(answer) == 0:
+                continue
             if MAGIC_STRINGS["exit"] in answer:
                 print("Escape magic string detected, exiting...")
                 return result
