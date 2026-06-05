@@ -1025,11 +1025,19 @@ def look_up(flags: list[str], *args: str) -> return_value:
     res: dict[str, str] = {}
     if not os.path.isfile(args[1]):
         print(
-            f"{RED}Error occurred when trying to read file {args[1]}, not found.{RESET}"
+            f'{RED}Error occurred when trying to read file "{args[1]}", not found.{RESET}'
         )
         return result
+    title: str = ""
     with open(args[1], encoding="utf-8") as file:
-        for word in file.readlines()[1:]:
+        _: list[str] = file.readlines()
+        if len(_) < 2:
+            print(
+                f'{RED}Error occurred when trying to read a empty file "{args[1]}"{RESET}'
+            )
+            return result
+        title = _[0].strip()
+        for word in _[1:]:
             print(word)
             result_ = fetch(DEFAULT_URL + word.strip())
             if "title" in result_:
@@ -1096,14 +1104,17 @@ def look_up(flags: list[str], *args: str) -> return_value:
                 res[word] = defs[ins]["definitions"][0]["definition"]
     if os.path.isfile(args[1] + ".dtb") and not ("-f" in flags or "--force" in flags):
         print(
-            f"{RED}Error occurred when trying to write to file {args[1]}.dtb, please use -f or --force to force overwrite, or "
+            f'{RED}Error occurred when trying to write to file "{args[1]}.dtb", please use -f or --force to force overwrite, or '
             f"change the name of the existed file{RESET}"
         )
     if "-f" in flags or "--force" in flags:
         with open(args[1] + ".dtb", "w", encoding="utf-8") as file:
             pass
     with open(args[1] + ".dtb", "a", encoding="utf-8") as file:
-        file.write(input("title? ").strip() + "\n")
+        if input(f"Use original title ({title})?") in trues:
+            file.write(title + "\n")
+        else:
+            file.write(input("title? ").strip() + "\n")
         if input("write meta data?").strip() in trues:
             file.write("[meta start]\n")
             inp: str
