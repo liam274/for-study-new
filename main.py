@@ -702,7 +702,9 @@ def study(flags: list[str], *args: str) -> return_value:
         ori_trying: int = trying
         start: float = time_module.time()
         while (
-            answer := set(i.strip() for i in input(qer, history=history).split("+"))
+            answer := set(
+                i.strip() for i in input(qer, history=history).split("+") if i.strip()
+            )
         ) != sets:
             if break_through:
                 break
