@@ -693,13 +693,13 @@ def study(flags: list[str], *args: str) -> return_value:
         if ("ignore",) in specific_rules.get("set", set(tuple())):
             continue
         done_question += 1
-        splitor: str = " ".join(["_"] * len("".join(sets)))
         if MODE == "tts":
             getche("Press any key to listen >>")
             TTS_ENGINE.say(i)
             TTS_ENGINE.runAndWait()
             i = ""
         if ("do-filling",) in specific_rules.get("set", set()):
+            splitor: str = " ".join(["_"] * len("".join(sets)))
             if temp.first:
                 i += " " + splitor
             else:
