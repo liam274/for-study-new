@@ -612,7 +612,7 @@ def study(flags: list[str], *args: str) -> return_value:
         f: list[str] = []
         for file in files:
             with open(file, encoding="utf-8") as FI:
-                f += [i.strip() for i in FI.readlines()[1:]]
+                f += [i.strip() for i in FI.readlines()]
         files = f
     questions: dict[str, answer] = {}
     titles: list[str] = []
