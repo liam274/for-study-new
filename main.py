@@ -804,7 +804,7 @@ def study(flags: list[str], *args: str) -> return_value:
     print(f"  Wrong Question: {RESET}")
     for question, answer, time in status_list:
         if time > 0:
-            print(f"    {question}[{time}]")
+            print(f"    [{time}] {question} -> {answer.replace("~"," + ")}")
             wrong_list.add((question, answer, time))
     if "--export-wrong" in flags:
         for i in args[1:]:
