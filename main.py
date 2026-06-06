@@ -879,13 +879,12 @@ def cp(flags: list[str], *args: str) -> return_value:
 
 def mv(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
-    if len(args) < 2:
+    if len(args) < 3:
         print("Not enough arguments provided")
         return result
-    if len(args) < 3:
-        shutil.move(args[1], args[1])
-    else:
-        shutil.move(args[1], args[2])
+    if os.path.exists(args[2]):
+        os.remove(args[2])
+    shutil.move(args[1], args[2])
     return result
 
 
