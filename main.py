@@ -1288,7 +1288,7 @@ def grep(_: list[str], *args: str) -> return_value:
 
 def touch(_: list[str], *args: str) -> return_value:
     result: return_value = return_value(try_again=False, exit=False)
-    for path in args:
+    for path in args[1:]:
         pathlib.Path(path).touch()
     return result
 
