@@ -15,6 +15,7 @@ import requests
 import itertools
 from collections import deque
 import datetime
+import pathlib
 
 from prompt_toolkit import prompt as input
 from dataclasses import dataclass, field
@@ -899,6 +900,8 @@ def mv(flags: list[str], *args: str) -> return_value:
             t_f_path = os.path.join(t_f_path, path)
         if os.path.exists(t_f_path):
             os.remove(t_f_path)
+        else:
+            pathlib.Path(t_f_path).touch()
         shutil.move(path, t_f_path)
     return result
 
@@ -1280,6 +1283,13 @@ def unalias(_: list[str], *args: str) -> return_value:
 def grep(_: list[str], *args: str) -> return_value:
     result: return_value = return_value(try_again=False, exit=False)
     subprocess.call(["grep", args[1]])
+    return result
+
+
+def touch(_: list[str], *args: str) -> return_value:
+    result: return_value = return_value(try_again=False, exit=False)
+    for path in args:
+        pathlib.Path(path).touch()
     return result
 
 
