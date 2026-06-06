@@ -882,9 +882,12 @@ def mv(flags: list[str], *args: str) -> return_value:
     if len(args) < 3:
         print("Not enough arguments provided")
         return result
-    if os.path.exists(args[2]):
-        os.remove(args[2])
-    shutil.move(args[1], args[2])
+    f_path: str = args[2]
+    if not os.path.isfile(f_path):
+        f_path = os.path.join(f_path, args[1])
+    if os.path.exists(f_path):
+        os.remove(f_path)
+    shutil.move(args[1], f_path)
     return result
 
 
