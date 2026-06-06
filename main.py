@@ -1012,7 +1012,16 @@ def rm(flags: list[str], *args: str) -> return_value:
         return result
     for path in args[1:]:
         if os.path.isdir(path):
-            print(f'"{path}" is a directory')
+            if "-r" in flags:
+                answer = (
+                    input(f'Are you sure you want to delete file "{path}"? (y/n) ')
+                    if "-f" not in flags and "--force" not in flags
+                    else trues[0]
+                )
+                if answer.lower() in trues:
+                    shutil.rmtree(path)
+            else:
+                print(f'"{path}" is a directory')
             return result
         if not os.path.isfile(path):
             print(f'"{path}" does not exist')
@@ -1390,8 +1399,12 @@ def executor() -> None:
             flags: list[str] = []
             arguments: list[str] = []
             for i in pre_command:
-                if i[0] == "-":
-                    flags.append(i)
+                if i[0] == "-" and len(i) > 1:
+                    if i[1] == "-":
+                        flags.append(i)
+                    else:
+                        for part in i[1:]:
+                            flags.append(f"-{part}")
                 else:
                     arguments.append(i)
             value: return_value = commands.get(command, unknown)(flags, *arguments)
