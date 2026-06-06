@@ -616,8 +616,9 @@ def study(flags: list[str], *args: str) -> return_value:
         f: list[str] = []
         for file in files:
             with open(file, encoding="utf-8") as FI:
-                f += [i.strip() for i in FI.readlines()[1:]]
-                titles.append(FI.readlines()[0])
+                d: list[str] = FI.readlines()
+                f += [i.strip() for i in d[1:]]
+                titles.append(d[0])
         files = f
     questions: dict[str, answer] = {}
     rule: dict[str, set[tuple[str, ...]]] = {}
