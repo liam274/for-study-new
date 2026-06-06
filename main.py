@@ -608,14 +608,17 @@ def study(flags: list[str], *args: str) -> return_value:
             files.append(i)
         else:
             print(f"{RED}Error: File {i} does not exist, skipping{RESET}")
+    titles: list[str] = []
+    have_title: bool = False
     if "--dtbs" in flags:
+        have_title = True
         f: list[str] = []
         for file in files:
             with open(file, encoding="utf-8") as FI:
-                f += [i.strip() for i in FI.readlines()]
+                f += [i.strip() for i in FI.readlines()[1:]]
+                titles.append(FI.readlines()[0])
         files = f
     questions: dict[str, answer] = {}
-    titles: list[str] = []
     rule: dict[str, set[tuple[str, ...]]] = {}
     for i in files:
         _: list[tuple[set[str], answer]]
@@ -626,7 +629,8 @@ def study(flags: list[str], *args: str) -> return_value:
         if not title:
             print(f"{RED}Error: File {i} is not valid, skipping{RESET}")
             continue
-        titles.append(title)
+        if not have_title:
+            titles.append(title)
         for dic in _:
             for n in dic[0]:
                 questions.update({n: dic[1]})
