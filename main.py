@@ -896,9 +896,9 @@ def mv(flags: list[str], *args: str) -> return_value:
     f_path: str = args[-1]
     for path in args[1:-1]:
         t_f_path = f_path
-        if not os.path.isfile(f_path):
-            t_f_path = os.path.join(t_f_path, path)
         if os.path.exists(t_f_path):
+            if not os.path.isfile(f_path):
+                t_f_path = os.path.join(t_f_path, path)
             os.remove(t_f_path)
         else:
             pathlib.Path(t_f_path).touch()
