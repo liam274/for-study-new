@@ -702,13 +702,11 @@ def study(flags: list[str], *args: str) -> return_value:
         ori_trying: int = trying
         start: float = time_module.time()
         while (
-            answer := set(
-                i.strip() for i in input(qer, history=history).split("+") if i.strip()
-            )
+            answer := set(i.strip() for i in input(qer, history=history).split("+"))
         ) != sets:
             if break_through:
                 break
-            if len(answer) == 0:
+            if not any(answer):
                 continue
             if MAGIC_STRINGS["exit"] in answer:
                 print("Escape magic string detected, exiting...")
