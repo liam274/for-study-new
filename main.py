@@ -487,7 +487,7 @@ def clear() -> None:
         subprocess.call(["clear"])
 
 
-def default(value: str, default_value: int) -> int:
+def default(value: str, default_value: int = 0) -> int:
     try:
         return int(value)
     except ValueError:
@@ -683,7 +683,7 @@ def study(flags: list[str], *args: str) -> return_value:
         sets: set[str] = temp.content
         specific_rules: dict[str, set[tuple[str, ...]]] = {}
         for name, rl in temp.rules.items():
-            tempie: set[tuple[str, ...]] = rule.get(name, set())
+            tempie: set[tuple[str, ...]] = {*rule.get(name, set())}
             for r in rl:
                 for item in {*tempie}:
                     if conflict("^".join(r)) in item:
@@ -736,7 +736,7 @@ def study(flags: list[str], *args: str) -> return_value:
             trying -= 1
             print("You're wrong! Please try again.")
             if (end := time_module.time() - start) > min(
-                safe_int(specific_rules.get("max_time", set("0")).pop()[0])
+                safe_int(specific_rules.get("max_time", set(("0",))).pop()[0])
                 or GLOBALS["max_time"],
                 3600,
             ):
@@ -879,13 +879,10 @@ def mkdir(flags: list[str], *args: str) -> return_value:
 
 def cp(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
-    if len(args) < 2:
+    if len(args) < 3:
         print("Not enough arguments provided")
         return result
-    if len(args) < 3:
-        shutil.copy(args[1], args[1])
-    else:
-        shutil.copy(args[1], args[2])
+    shutil.copy(args[1], args[2])
     return result
 
 
@@ -895,10 +892,13 @@ def mv(flags: list[str], *args: str) -> return_value:
         print("Not enough arguments provided")
         return result
     f_path: str = args[-1]
+    IS_DIR: bool = os.path.isdir(f_path)
+    if not IS_DIR and len(args) > 3:
+        print("Moving files to mono file is not allowed")
     for path in args[1:-1]:
         t_f_path = f_path
         if os.path.exists(t_f_path):
-            if not os.path.isfile(f_path):
+            if IS_DIR:
                 t_f_path = os.path.join(t_f_path, path)
             os.remove(t_f_path)
         else:
@@ -943,7 +943,7 @@ def _set(flags: list[str], *args: str) -> return_value:
         print("Not enough arguments provided")
         return result
     if args[1] not in DEFAULTS:
-        GLOBALS[args[1]] = int(args[2])
+        GLOBALS[args[1]] = safe_int(args[2])
     else:
         GLOBALS[args[1]] = default(args[2], DEFAULTS[args[1]])
     return result
@@ -1283,7 +1283,7 @@ def unalias(_: list[str], *args: str) -> return_value:
 
 def grep(_: list[str], *args: str) -> return_value:
     result: return_value = return_value(try_again=False, exit=False)
-    subprocess.call(["grep", args[1]])
+    subprocess.call(["grep", *args[1:]])
     return result
 
 
