@@ -693,20 +693,17 @@ def study(flags: list[str], *args: str) -> return_value:
         if ("ignore",) in specific_rules.get("set", set(tuple())):
             continue
         done_question += 1
-        splitor: str = (
-            " ".join(["_"] * len("".join(sets)))
-            if ("do-filling",) in specific_rules.get("set", set())
-            else ""
-        )
+        splitor: str = " ".join(["_"] * len("".join(sets)))
         if MODE == "tts":
             getche("Press any key to listen >>")
             TTS_ENGINE.say(i)
             TTS_ENGINE.runAndWait()
             i = ""
-        if temp.first:
-            i += " " + splitor
-        else:
-            i = splitor + " " + i
+        if ("do-filling",) in specific_rules.get("set", set()):
+            if temp.first:
+                i += " " + splitor
+            else:
+                i = splitor + " " + i
         qer: str = (len(f"{time}{total} ")) * " " + ">> "
         print(f"({time}/{total})", i)
         trying: int = (
