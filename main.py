@@ -727,6 +727,7 @@ def study(flags: list[str], *args: str) -> return_value:
                 time_consumed += time_module.time() - time_start_stamp
                 input("Press enter to resume>> ")
                 time_start_stamp = time_module.time()
+                continue
             if MAGIC_STRINGS["skip"] in answer:
                 print("Skip magic string detected, skipping...")
                 trying = 0
