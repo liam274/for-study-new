@@ -674,6 +674,7 @@ def study(flags: list[str], *args: str) -> return_value:
     for t, i in enumerate(question_list):
         if break_through:
             break
+        i = i.strip()
         if DO_WRONG and i not in flags:
             continue
         clear()
