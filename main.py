@@ -789,21 +789,21 @@ def study(flags: list[str], *args: str) -> return_value:
         status_list.add((i, "~".join(sets), ori_trying - trying))
     time_consumed += time_module.time() - time_start_stamp
     clear()
-    print("Study stat: ")
-    print(f"{BLUE}Time consumed: {time_consumed:.2f}")
-    print(f"{GREEN}Average time per question: {time_consumed/done_question:.2f}")
+    print(f"{BLUE}Study stat: ")
+    print(f"  Time consumed: {time_consumed:.2f}")
+    print(f"  {GREEN}Average time per question: {time_consumed/done_question:.2f}")
     print(
-        f"{YELLOW}Question that used most time: {most_question} in {most_time:.2f} sec"
+        f"  {YELLOW}Question that used most time: {most_question} in {most_time:.2f} sec"
     )
     if MODE == "timed":
         timeout_interrupt += len(question_list) - t
-    print(f"{PURPLE}Timeout interrupted questions: {timeout_interrupt:.2f}")
-    print(f"{RED}Skipped questions: {skip}{RESET}")
+    print(f"  {PURPLE}Timeout interrupted questions: {timeout_interrupt:.2f}")
+    print(f"  {RED}Skipped questions: {skip}")
     wrong_list: set[tuple[str, str, int]] = set()
-    print("Wrong Question: ")
+    print(f"  Wrong Question: {RESET}")
     for question, answer, time in status_list:
         if time < GLOBALS["chances"]:
-            print(f"  {question}[{time}]")
+            print(f"    {question}[{time}]")
             wrong_list.add((question, answer, time))
     if "--export-wrong" in flags:
         for i in args[1:]:
