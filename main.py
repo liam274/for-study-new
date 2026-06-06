@@ -778,6 +778,7 @@ def study(flags: list[str], *args: str) -> return_value:
                 print("Time's up!")
                 break
             time_module.sleep(0.2)
+            status_list.add((i, "~".join(sets), ori_trying - trying))
             continue
         end: float = time_module.time() - start
         if end > most_time:
@@ -802,7 +803,7 @@ def study(flags: list[str], *args: str) -> return_value:
     wrong_list: set[tuple[str, str, int]] = set()
     print(f"  Wrong Question: {RESET}")
     for question, answer, time in status_list:
-        if time < GLOBALS["chances"]:
+        if time > 0:
             print(f"    {question}[{time}]")
             wrong_list.add((question, answer, time))
     if "--export-wrong" in flags:
