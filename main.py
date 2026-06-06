@@ -608,6 +608,12 @@ def study(flags: list[str], *args: str) -> return_value:
             files.append(i)
         else:
             print(f"{RED}Error: File {i} does not exist, skipping{RESET}")
+    if "--dtbs" in flags:
+        f: list[str] = []
+        for file in files:
+            with open(file, encoding="utf-8") as FI:
+                f += [i.strip() for i in FI.readlines()[1:]]
+        files = f
     questions: dict[str, answer] = {}
     titles: list[str] = []
     rule: dict[str, set[tuple[str, ...]]] = {}
