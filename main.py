@@ -717,8 +717,6 @@ def study(flags: list[str], *args: str) -> return_value:
         while (
             answer := set(i.strip() for i in input(qer, history=history).split("+"))
         ) != sets:
-            if break_through:
-                break
             if not any(answer):
                 continue
             if MAGIC_STRINGS["exit"] in answer:
@@ -747,9 +745,11 @@ def study(flags: list[str], *args: str) -> return_value:
                 )
                 break_through = True
                 timeout_interrupt += 1
+                break
             if end > TIME_LIMIT:
                 print("Time's up!")
                 break_through = True
+                break
             if trying == 0:
                 print(
                     "You've ran out of chances! The correct answers are: ",
@@ -774,11 +774,11 @@ def study(flags: list[str], *args: str) -> return_value:
                     "Are you doing on something else? Go either play, or "
                     f"study! Don't PRETEND to study. You've used too much time ({end} sec)"
                 )
-                break_through = True
                 timeout_interrupt += 1
+                break
             if end > TIME_LIMIT:
                 print("Time's up!")
-                break_through = True
+                break
             time_module.sleep(0.2)
             continue
         end: float = time_module.time() - start
@@ -787,7 +787,7 @@ def study(flags: list[str], *args: str) -> return_value:
             most_time = end
         if end > TIME_LIMIT:
             print("Time's up!")
-            break_through = True
+            break
         status_list.add((i, "~".join(sets), ori_trying - trying))
     time_consumed += time_module.time() - time_start_stamp
     clear()
