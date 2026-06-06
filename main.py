@@ -1319,6 +1319,7 @@ commands: dict[str, Callable[..., return_value]] = {
     "bash": bash,
     "unalias": unalias,
     "grep": grep,
+    "touch": touch,
 }
 alias: dict[str, str] = {}
 GLOBALS: dict[str, int] = {"chances": 10, "max_time": 300}
