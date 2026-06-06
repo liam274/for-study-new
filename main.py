@@ -1277,6 +1277,12 @@ def unalias(_: list[str], *args: str) -> return_value:
     return result
 
 
+def grep(_: list[str], *args: str) -> return_value:
+    result: return_value = return_value(try_again=False, exit=False)
+    subprocess.call(["grep", args[1]])
+    return result
+
+
 commands: dict[str, Callable[..., return_value]] = {
     "study": study,
     "cd": cd,
@@ -1302,6 +1308,7 @@ commands: dict[str, Callable[..., return_value]] = {
     "info": info,
     "bash": bash,
     "unalias": unalias,
+    "grep": grep,
 }
 alias: dict[str, str] = {}
 GLOBALS: dict[str, int] = {"chances": 10, "max_time": 300}
