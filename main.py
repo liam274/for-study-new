@@ -742,7 +742,7 @@ def study(flags: list[str], *args: str) -> return_value:
             ):
                 print(
                     "Are you doing on something else? Go either play, or "
-                    f"study! Don't PRETEND to study. You've used too much time ({end} sec)"
+                    f"study! Don't PRETEND to study. You've used too much time ({end:.2f} sec)"
                 )
                 break_through = True
                 timeout_interrupt += 1
@@ -773,7 +773,7 @@ def study(flags: list[str], *args: str) -> return_value:
             ):
                 print(
                     "Are you doing on something else? Go either play, or "
-                    f"study! Don't PRETEND to study. You've used too much time ({end} sec)"
+                    f"study! Don't PRETEND to study. You've used too much time ({end:.2f} sec)"
                 )
                 timeout_interrupt += 1
                 break
@@ -793,13 +793,15 @@ def study(flags: list[str], *args: str) -> return_value:
     time_consumed += time_module.time() - time_start_stamp
     clear()
     print("Study stat: ")
-    print(f"Time consumed: {time_consumed:.2f}")
-    print(f"Average time per question: {time_consumed/done_question:.2f}")
-    print(f"Question that used most time: {most_question} in {most_time:.2f} sec")
+    print(f"{BLUE}Time consumed: {time_consumed:.2f}")
+    print(f"{GREEN}Average time per question: {time_consumed/done_question:.2f}")
+    print(
+        f"{YELLOW}Question that used most time: {most_question} in {most_time:.2f} sec"
+    )
     if MODE == "timed":
         timeout_interrupt += len(question_list) - t
-    print(f"Timeout interrupted questions: {timeout_interrupt}")
-    print(f"Skipped questions: {skip}")
+    print(f"{PURPLE}Timeout interrupted questions: {timeout_interrupt:.2f}")
+    print(f"{RED}Skipped questions: {skip}{RESET}")
     wrong_list: set[tuple[str, str, int]] = set()
     print("Wrong Question: ")
     for question, answer, time in status_list:
@@ -1334,6 +1336,7 @@ GREEN = "\033[32m"
 YELLOW = "\033[33m"
 BLUE = "\033[34m"
 RED = "\033[31m"
+PURPLE = "\033[35m"
 working_dir: str = shrinkuser(os.getcwd())
 prompt = f"{BOLD}{GREEN}{username}{RESET}{BOLD}:{BLUE}{working_dir}{YELLOW} $ {RESET}"
 
