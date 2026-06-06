@@ -387,7 +387,7 @@ class meta_data_parser:
                     l = file.readlines()
                     if len(l) != 0:
                         d = data.split("\n") + list(i.strip() for i in l[1:])
-                        data = "\n".join([(d[0][:-1] + " & " + l[0]).strip()] + d[1:])
+                        data = "\n".join([(d[0] + " & " + l[0]).strip()] + d[1:])
         return data
 
 
