@@ -1238,6 +1238,33 @@ def info(flags: list[str], *args: str) -> return_value:
     return result
 
 
+def runner(line: str) -> bool:
+    pre_command: tuple[str, ...] = compile(line.strip())
+    if not pre_command:
+        return True
+    command: str = pre_command[0]
+    command = alias.get(command, command)
+    flags: list[str] = []
+    arguments: list[str] = []
+    for i in pre_command:
+        if i[0] == "-" and len(i) > 1:
+            if i[1] == "-":
+                flags.append(i)
+            else:
+                for part in i[1:]:
+                    flags.append(f"-{part}")
+        else:
+            arguments.append(i)
+    value: return_value = commands.get(command, unknown)(flags, *arguments)
+    if value.exit:
+        return False
+    while value.try_again:
+        value = commands.get(command, unknown)(flags + value.flag, *arguments)
+        if value.exit:
+            return False
+    return True
+
+
 def bash(_: list[str], *args: str) -> return_value:
     result: return_value = return_value(exit=False, try_again=False)
     for file in args[1:]:
@@ -1245,32 +1272,8 @@ def bash(_: list[str], *args: str) -> return_value:
             with open(file, encoding="utf-8") as f:
                 for line in f.readlines():
                     try:
-                        pre_command: tuple[str, ...] = compile(line.strip())
-                        if not pre_command:
-                            continue
-                        command: str = pre_command[0]
-                        command = alias.get(command, command)
-                        flags: list[str] = []
-                        arguments: list[str] = []
-                        for i in pre_command:
-                            if i[0] == "-":
-                                flags.append(i)
-                            else:
-                                arguments.append(i)
-                        value: return_value = commands.get(command, unknown)(
-                            flags, *arguments
-                        )
-                        if value.exit:
+                        if not runner(line):
                             break
-                        while value.try_again:
-                            value = commands.get(command, unknown)(
-                                flags + value.flag, *arguments
-                            )
-                            if value.exit:
-                                break
-                        else:
-                            continue
-                        break
                     except KeyboardInterrupt:
                         print()
                         continue
@@ -1384,39 +1387,15 @@ def executor() -> None:
     completer = StudyCompleter()
     while 1:
         try:
-            pre_command: tuple[str, ...] = compile(
+            if not runner(
                 input(
                     ANSI(prompt),
                     history=history,
                     completer=completer,
                     complete_while_typing=True,
                 ).strip()
-            )
-            if not pre_command:
-                continue
-            command: str = pre_command[0]
-            command = alias.get(command, command)
-            flags: list[str] = []
-            arguments: list[str] = []
-            for i in pre_command:
-                if i[0] == "-" and len(i) > 1:
-                    if i[1] == "-":
-                        flags.append(i)
-                    else:
-                        for part in i[1:]:
-                            flags.append(f"-{part}")
-                else:
-                    arguments.append(i)
-            value: return_value = commands.get(command, unknown)(flags, *arguments)
-            if value.exit:
+            ):
                 break
-            while value.try_again:
-                value = commands.get(command, unknown)(flags + value.flag, *arguments)
-                if value.exit:
-                    break
-            else:
-                continue
-            break
         except KeyboardInterrupt:
             continue
 
