@@ -15,7 +15,6 @@ import requests
 import os
 import subprocess
 from .constants import *
-from .parser import parser
 import shutil
 import pathlib
 
@@ -141,50 +140,6 @@ def is_volume_on():
     except Exception as e:
         log(f"is_volume_on failed: {e}", "WARN")
         return True
-
-
-def parse(
-    path: str,
-) -> tuple[tuple[list[tuple[set[str], answer]], str], dict[str, list[tuple[str, ...]]]]:
-    result: list[tuple[set[str], answer]] = []
-    _, rules = parser(path).exec()
-    for line, rl in _[1:]:
-        special_char: str = line[0]  # type: ignore
-        if special_char == "~":
-            result.append(
-                ({line[1]}, answer(first=True, content={*line[2:]}, rules=rl))
-            )
-        elif special_char == ":":
-            result.append(
-                ({line[1]}, answer(first=True, content={*line[2:]}, rules=rl))
-            )
-            result.append(
-                ({*line[2:]}, answer(first=False, content={line[1]}, rules=rl))
-            )
-        elif special_char.startswith("-("):
-            result.append(
-                (
-                    {line[1] + special_char},
-                    answer(
-                        first=True,
-                        content=set(i.strip() for i in line[2].split("+")),
-                        rules=rl,
-                    ),
-                )
-            )
-            result.append(
-                (
-                    {special_char + line[2]},
-                    answer(
-                        first=False,
-                        content=set(i.strip() for i in line[1].split("+")),
-                        rules=rl,
-                    ),
-                )
-            )
-        else:
-            result.append(({line[0]}, answer(first=True, content={line[0]}, rules=rl)))
-    return (result, _[0][0][0]), rules
 
 
 def get_size() -> tuple[int, int]:

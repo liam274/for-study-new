@@ -2,7 +2,7 @@ from .constants import SPECIAL_CHARS
 from .constants import *
 import itertools
 from typing import Iterator, Callable
-from .utils import ExtendableIterator, safe_int
+from .utils import *
 
 import os
 
@@ -345,3 +345,47 @@ class parser:
                 result.append((tuple(i for i in all), rule))
             rule.clear()
         return tuple(result), meta_data.data
+
+
+def parse(
+    path: str,
+) -> tuple[tuple[list[tuple[set[str], answer]], str], dict[str, list[tuple[str, ...]]]]:
+    result: list[tuple[set[str], answer]] = []
+    _, rules = parser(path).exec()
+    for line, rl in _[1:]:
+        special_char: str = line[0]  # type: ignore
+        if special_char == "~":
+            result.append(
+                ({line[1]}, answer(first=True, content={*line[2:]}, rules=rl))
+            )
+        elif special_char == ":":
+            result.append(
+                ({line[1]}, answer(first=True, content={*line[2:]}, rules=rl))
+            )
+            result.append(
+                ({*line[2:]}, answer(first=False, content={line[1]}, rules=rl))
+            )
+        elif special_char.startswith("-("):
+            result.append(
+                (
+                    {line[1] + special_char},
+                    answer(
+                        first=True,
+                        content=set(i.strip() for i in line[2].split("+")),
+                        rules=rl,
+                    ),
+                )
+            )
+            result.append(
+                (
+                    {special_char + line[2]},
+                    answer(
+                        first=False,
+                        content=set(i.strip() for i in line[1].split("+")),
+                        rules=rl,
+                    ),
+                )
+            )
+        else:
+            result.append(({line[0]}, answer(first=True, content={line[0]}, rules=rl)))
+    return (result, _[0][0][0]), rules
