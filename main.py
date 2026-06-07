@@ -61,7 +61,7 @@ class answer:
 class return_value:
     try_again: bool
     exit: bool
-    flag: list[str] = field(default_factory=lambda: [])
+    flag: set[str] = field(default_factory=lambda: set())
 
 
 class StudyCompleter(Completer):  # deepseek's job
@@ -156,7 +156,7 @@ class meta_data_parser:
         self.default: dict[str, tuple[str, ...]] = {"version": (str(META_VERSION),)}
 
     def meta(
-        self: meta_data_parser, data: Iterator[str], flags: list[str] = []
+        self: meta_data_parser, data: Iterator[str], flags: set[str] = set()
     ) -> bool:
         macro: dict[str, str] = {}
         data, data2 = itertools.tee(data)
@@ -396,7 +396,7 @@ class parser:
         with open(path, "r", encoding="utf-8") as file:
             self.iter = (i.rstrip("\n") for i in file.readlines())
 
-    def exec(self, flags: list[str] = []) -> tuple[
+    def exec(self, flags: set[str] = set()) -> tuple[
         tuple[tuple[tuple[str, ...], dict[str, set[tuple[str, ...]]]], ...],
         dict[str, list[tuple[str, ...]]],
     ]:
@@ -595,12 +595,12 @@ def confirm_input(prompt: str, no_strip: bool = False) -> str:
 
 
 # main function
-def unknown(flags: list[str], *args: str) -> return_value:
+def unknown(flags: set[str], *args: str) -> return_value:
     print("Unknown command:", args[0])
     return return_value(try_again=False, exit=False)
 
 
-def study(flags: list[str], *args: str) -> return_value:
+def study(flags: set[str], *args: str) -> return_value:
     """Study a file."""
     result: return_value = return_value(try_again=False, exit=False)
     files: list[str] = []
@@ -729,8 +729,8 @@ def study(flags: list[str], *args: str) -> return_value:
                 trying = 0
                 skip += 1
                 break
-            if sets - answer!=sets:
-                sets-=answer
+            if sets - answer != sets:
+                sets -= answer
             else:
                 trying -= 1
                 print("You're wrong! Please try again.")
@@ -827,14 +827,16 @@ def study(flags: list[str], *args: str) -> return_value:
     if input("try again? ").strip().lower() in trues:
         result = return_value(exit=False, try_again=True)
         if ("do-wrong-again-only",) in rule["set"]:
-            q: list[str] = ["--do-wrong"]
+            q: set[str] = {
+                "--do-wrong",
+            }
             for question, __, __ in wrong_list:
-                q.append(question)
+                q.add(question)
             result.flag = q
     return result
 
 
-def cd(flags: list[str], *args: str) -> return_value:
+def cd(flags: set[str], *args: str) -> return_value:
     global working_dir, prompt
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
@@ -853,7 +855,7 @@ def cd(flags: list[str], *args: str) -> return_value:
     return result
 
 
-def vim(flags: list[str], *args: str) -> return_value:
+def vim(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
         print("No path provided")
@@ -865,7 +867,7 @@ def vim(flags: list[str], *args: str) -> return_value:
     return result
 
 
-def set_alias(flags: list[str], *args: str) -> return_value:
+def set_alias(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 3:
         print("Not enough arguments provided")
@@ -874,7 +876,7 @@ def set_alias(flags: list[str], *args: str) -> return_value:
     return result
 
 
-def mkdir(flags: list[str], *args: str) -> return_value:
+def mkdir(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
         print("No path provided")
@@ -883,7 +885,7 @@ def mkdir(flags: list[str], *args: str) -> return_value:
     return result
 
 
-def cp(flags: list[str], *args: str) -> return_value:
+def cp(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 3:
         print("Not enough arguments provided")
@@ -892,7 +894,7 @@ def cp(flags: list[str], *args: str) -> return_value:
     return result
 
 
-def mv(flags: list[str], *args: str) -> return_value:
+def mv(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 3:
         print("Not enough arguments provided")
@@ -913,7 +915,7 @@ def mv(flags: list[str], *args: str) -> return_value:
     return result
 
 
-def _help(flags: list[str], *args: str) -> return_value:
+def _help(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) > 1:
         if args[1] in commands:
@@ -928,13 +930,13 @@ def _help(flags: list[str], *args: str) -> return_value:
     return result
 
 
-def _clear(flags: list[str], *args: str) -> return_value:
+def _clear(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     clear()
     return result
 
 
-def _exec(flags: list[str], *args: str) -> return_value:
+def _exec(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
         print("No command provided")
@@ -943,7 +945,7 @@ def _exec(flags: list[str], *args: str) -> return_value:
     return result
 
 
-def _set(flags: list[str], *args: str) -> return_value:
+def _set(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 3:
         print("Not enough arguments provided")
@@ -955,7 +957,7 @@ def _set(flags: list[str], *args: str) -> return_value:
     return result
 
 
-def ls(flags: list[str], *args: str) -> return_value:
+def ls(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     for [_, dirs, files] in os.walk(os.getcwd()):
         for dir in dirs:
@@ -970,7 +972,7 @@ def ls(flags: list[str], *args: str) -> return_value:
     return result
 
 
-def cat(flags: list[str], *args: str) -> return_value:
+def cat(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
         print("No path provided")
@@ -989,19 +991,19 @@ def cat(flags: list[str], *args: str) -> return_value:
     return result
 
 
-def whoami(flags: list[str], *args: str) -> return_value:
+def whoami(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     print(f'You are "{username}", who has been studying hard!')
     return result
 
 
-def echo(flags: list[str], *args: str) -> return_value:
+def echo(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     print(" ".join(args[1:]))
     return result
 
 
-def restart(flags: list[str], *args: str) -> return_value:
+def restart(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     print("Restarting...")
     os.execv(sys.executable, [sys.executable, os.path.join(PATH, sys.argv[0])])
@@ -1009,7 +1011,7 @@ def restart(flags: list[str], *args: str) -> return_value:
     return result
 
 
-def rm(flags: list[str], *args: str) -> return_value:
+def rm(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
         print("No path provided")
@@ -1043,7 +1045,7 @@ def rm(flags: list[str], *args: str) -> return_value:
 DEFAULT_URL: str = "https://api.dictionaryapi.dev/api/v2/entries/en/"
 
 
-def look_up(flags: list[str], *args: str) -> return_value:
+def look_up(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
         return result
@@ -1165,7 +1167,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
     return result
 
 
-def meta(flags: list[str], *args: str) -> return_value:
+def meta(flags: set[str], *args: str) -> return_value:
     result: return_value = return_value(exit=False, try_again=False)
     if not os.path.isfile(args[1]):
         print(
@@ -1198,7 +1200,7 @@ def meta(flags: list[str], *args: str) -> return_value:
     return result
 
 
-def merge(flags: list[str], *args: str) -> return_value:
+def merge(flags: set[str], *args: str) -> return_value:
     """merge multiple study dtbs"""
     result: return_value = return_value(exit=False, try_again=False)
     it: Iterator[str] = None  # type: ignore
@@ -1226,7 +1228,7 @@ def merge(flags: list[str], *args: str) -> return_value:
     return result
 
 
-def info(flags: list[str], *args: str) -> return_value:
+def info(flags: set[str], *args: str) -> return_value:
     result: return_value = return_value(exit=False, try_again=False)
     for file in args[1:]:
         if not os.path.isfile(file):
@@ -1248,28 +1250,28 @@ def runner(line: str) -> bool:
         return True
     command: str = pre_command[0]
     command = alias.get(command, command)
-    flags: list[str] = []
+    flags: set[str] = set()
     arguments: list[str] = []
     for i in pre_command:
         if i[0] == "-" and len(i) > 1:
             if i[1] == "-":
-                flags.append(i)
+                flags.add(i)
             else:
                 for part in i[1:]:
-                    flags.append(f"-{part}")
+                    flags.add(f"-{part}")
         else:
             arguments.append(i)
     value: return_value = commands.get(command, unknown)(flags, *arguments)
     if value.exit:
         return False
     while value.try_again:
-        value = commands.get(command, unknown)(flags + value.flag, *arguments)
+        value = commands.get(command, unknown)(flags.union(value.flag), *arguments)
         if value.exit:
             return False
     return True
 
 
-def bash(_: list[str], *args: str) -> return_value:
+def bash(_: set[str], *args: str) -> return_value:
     result: return_value = return_value(exit=False, try_again=False)
     for file in args[1:]:
         if os.path.isfile(file):
@@ -1284,7 +1286,7 @@ def bash(_: list[str], *args: str) -> return_value:
     return result
 
 
-def unalias(_: list[str], *args: str) -> return_value:
+def unalias(_: set[str], *args: str) -> return_value:
     global alias
     result: return_value = return_value(try_again=False, exit=False)
     if len(args) == 1:
@@ -1299,13 +1301,13 @@ def unalias(_: list[str], *args: str) -> return_value:
     return result
 
 
-def grep(_: list[str], *args: str) -> return_value:
+def grep(_: set[str], *args: str) -> return_value:
     result: return_value = return_value(try_again=False, exit=False)
     subprocess.call(["grep", *args[1:]])
     return result
 
 
-def touch(_: list[str], *args: str) -> return_value:
+def touch(_: set[str], *args: str) -> return_value:
     result: return_value = return_value(try_again=False, exit=False)
     for path in args[1:]:
         pathlib.Path(path).touch()
@@ -1409,5 +1411,5 @@ if __name__ == "__main__":
         f"Hello from study terminal! Type {GREEN}'help'{RESET} for available commands."
     )
     if os.path.isfile(".studyrc"):
-        bash([], ".studyrc")
+        bash(set(), ".studyrc")
     executor()
