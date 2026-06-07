@@ -594,6 +594,13 @@ def confirm_input(prompt: str, no_strip: bool = False) -> str:
     return result if no_strip else result.strip()
 
 
+def get_clr(file: str) -> str:
+    path: pathlib.Path = pathlib.Path(file)
+    if os.access(path, os.X_OK):
+        return BOLD + GREEN
+    return BOLD + DIR.get(path.suffix, RESET)
+
+
 # main function
 def unknown(flags: set[str], *args: str) -> return_value:
     print(f"{RED}{BOLD}Unknown command:", args[0], RESET)
@@ -970,8 +977,9 @@ def ls(flags: set[str], *args: str) -> return_value:
         for file in files:
             if file.startswith(".") and hide:
                 continue
-            print(file)
+            print(get_clr(file) + file)
         dirs.clear()
+        print(RESET, end="")
     return result
 
 
@@ -1385,6 +1393,7 @@ ORANGE: str = "\033[38;5;208m"
 working_dir: str = shrinkuser(os.getcwd())
 SYS_NAME: str = "studyish"
 prompt = f"{BOLD}{GREEN}{username}@{SYS_NAME}{RESET}{BOLD}:{BLUE}{working_dir}{YELLOW} $ {RESET}"
+DIR: dict[str, str] = {".py": YELLOW, ".cpp": YELLOW}
 
 TTS_ENGINE: pyttsx3.Engine = pyttsx3.init()  # type: ignore
 TTS_ENGINE.setProperty("rate", 150)  # type: ignore
