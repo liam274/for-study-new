@@ -711,9 +711,8 @@ def study(flags: list[str], *args: str) -> return_value:
         )
         ori_trying: int = trying
         start: float = time_module.time()
-        while (
-            answer := set(i.strip() for i in input(qer, history=history).split("+"))
-        ) != sets:
+        while sets:
+            answer = set(i.strip() for i in input(qer, history=history).split("+"))
             if not any(answer):
                 continue
             if MAGIC_STRINGS["exit"] in answer:
@@ -730,8 +729,18 @@ def study(flags: list[str], *args: str) -> return_value:
                 trying = 0
                 skip += 1
                 break
-            trying -= 1
-            print("You're wrong! Please try again.")
+            if sets - answer!=sets:
+                sets-=answer
+            else:
+                trying -= 1
+                print("You're wrong! Please try again.")
+                if trying == 0:
+                    print(
+                        "You've ran out of chances! The correct answers are: ",
+                        " and ".join(sets),
+                    )
+                    getchar("Press to continue >>")
+                    break
             if (end := time_module.time() - start) > min(
                 safe_int(specific_rules.get("max_time", set(("0",))).pop()[0])
                 or GLOBALS["max_time"],
@@ -748,13 +757,6 @@ def study(flags: list[str], *args: str) -> return_value:
             if end > TIME_LIMIT:
                 print("Time's up!")
                 break_through = True
-                break
-            if trying == 0:
-                print(
-                    "You've ran out of chances! The correct answers are: ",
-                    " and ".join(sets),
-                )
-                getchar("Press to continue >>")
                 break
         else:
             print("Correct!")
