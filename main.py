@@ -19,7 +19,6 @@ from lib.utils import *
 from lib.parser import meta_data_parser, parse
 
 from prompt_toolkit import prompt as input
-from getch import getche  # type: ignore
 import subprocess
 import shutil
 from prompt_toolkit.formatted_text import ANSI

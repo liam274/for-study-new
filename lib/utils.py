@@ -15,6 +15,7 @@ import requests
 import os
 import subprocess
 from .constants import *
+from getch import getche  # type: ignore
 import shutil
 import pathlib
 
