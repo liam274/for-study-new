@@ -729,7 +729,7 @@ def study(flags: set[str], *args: str) -> return_value:
                 trying = 0
                 skip += 1
                 break
-            if sets - answer != sets:
+            if sets - answer != sets and not (answer - sets):
                 sets -= answer
             else:
                 trying -= 1
