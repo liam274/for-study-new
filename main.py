@@ -107,7 +107,7 @@ def study(flags: set[str], *args: str) -> return_value:
     DO_WRONG: bool = "--do-wrong" in flags
     chances: int = GLOBALS["chances"]
     time_consumed: float = 0
-    time_start_stamp: float = time_module.time()
+    start: float = time_module.time()
     done_question: int = 0
     most_question: str = ""
     most_time: float = 0
@@ -154,7 +154,6 @@ def study(flags: set[str], *args: str) -> return_value:
             safe_int(specific_rules.get("chance", set("0")).pop()[0]) or chances
         )
         ori_trying: int = trying
-        start: float = time_module.time()
         while sets:
             answer = set(i.strip() for i in input(qer, history=history).split("+"))
             if not any(answer):
@@ -164,9 +163,9 @@ def study(flags: set[str], *args: str) -> return_value:
                 return result
             if MAGIC_STRINGS["pause"] in answer:
                 print("Pause magic string detected, paused...")
-                time_consumed += time_module.time() - time_start_stamp
+                time_consumed += time_module.time() - start
                 input("Press enter to resume>> ")
-                time_start_stamp = time_module.time()
+                start = time_module.time()
                 continue
             if MAGIC_STRINGS["skip"] in answer:
                 print("Skip magic string detected, skipping...")
@@ -236,7 +235,7 @@ def study(flags: set[str], *args: str) -> return_value:
             print("Time's up!")
             break
         status_list.add((i, "~".join(sets), ori_trying - trying))
-    time_consumed += time_module.time() - time_start_stamp
+    time_consumed += time_module.time() - start
     clear()
     print(f"{BOLD}{BLUE}Study stat: ")
     print(f"  Time consumed: {time_consumed:.2f}")
