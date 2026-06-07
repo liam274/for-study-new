@@ -107,7 +107,7 @@ def study(flags: set[str], *args: str) -> return_value:
     DO_WRONG: bool = "--do-wrong" in flags
     chances: int = GLOBALS["chances"]
     time_consumed: float = 0
-    start: float = time_module.time()
+    begin: float = time_module.time()
     done_question: int = 0
     most_question: str = ""
     most_time: float = 0
@@ -154,6 +154,7 @@ def study(flags: set[str], *args: str) -> return_value:
             safe_int(specific_rules.get("chance", set("0")).pop()[0]) or chances
         )
         ori_trying: int = trying
+        start: float = time_module.time()
         while sets:
             answer = set(i.strip() for i in input(qer, history=history).split("+"))
             if not any(answer):
@@ -235,7 +236,7 @@ def study(flags: set[str], *args: str) -> return_value:
             print("Time's up!")
             break
         status_list.add((i, "~".join(sets), ori_trying - trying))
-    time_consumed += time_module.time() - start
+    time_consumed += time_module.time() - begin
     clear()
     print(f"{BOLD}{BLUE}Study stat: ")
     print(f"  Time consumed: {time_consumed:.2f}")
