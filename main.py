@@ -138,7 +138,7 @@ def study(flags: set[str], *args: str) -> return_value:
             continue
         done_question += 1
         if MODE == "tts":
-            getche("Press any key to listen >>")
+            getchar("Press any key to listen >>")
             TTS_ENGINE.say(i)
             TTS_ENGINE.runAndWait()
             i = ""
@@ -195,7 +195,7 @@ def study(flags: set[str], *args: str) -> return_value:
                 )
                 break_through = True
                 timeout_interrupt += 1
-                getche("Press to continue >>")
+                getchar("Press to continue >>")
                 break
             if end > TIME_LIMIT:
                 print("Time's up!")
@@ -218,7 +218,7 @@ def study(flags: set[str], *args: str) -> return_value:
                     "Are you doing on something else? Go either play, or "
                     f"study! Don't PRETEND to study. You've used too much time ({end:.2f} sec)"
                 )
-                getche("Press to continue >>")
+                getchar("Press to continue >>")
                 timeout_interrupt += 1
                 break
             if end > TIME_LIMIT:
