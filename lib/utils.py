@@ -14,8 +14,8 @@ import sys
 import requests
 import os
 import subprocess
-from constants import *
-from parser import parser
+from .constants import *
+from .parser import parser
 import shutil
 import pathlib
 

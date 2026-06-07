@@ -4,3 +4,8 @@
 *.txt
 !README.md
 !requirements.txt
+*/
+*/*
+!lib/
+!lib/*
+lib/*/
