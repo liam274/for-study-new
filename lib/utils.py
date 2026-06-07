@@ -65,7 +65,7 @@ class StudyCompleter(Completer):  # deepseek's job
             )
 
 
-class ExtendableIterator[T]:
+class ExtendableIterator[T]:  # deepseek's job
     def __init__(self, initial_iterator: Iterator[T]):
         self._source = initial_iterator  # original iterator
         self._buffer: deque[T] = deque()  # items added dynamically
@@ -95,6 +95,7 @@ class ExtendableIterator[T]:
 
 
 def fetch(url: str, timeout: int = 10) -> list[Any]:
+    """fetch url and return"""
     try:
         resp = requests.get(url, timeout=timeout)
     except Exception as e:
@@ -105,6 +106,7 @@ def fetch(url: str, timeout: int = 10) -> list[Any]:
 
 
 def clear() -> None:
+    """clear screen"""
     if os.name == "nt":
         subprocess.call(["cls"])
     else:
@@ -112,6 +114,7 @@ def clear() -> None:
 
 
 def default(value: str, default_value: int = 0) -> int:
+    """return default if not int"""
     try:
         return int(value)
     except ValueError:
@@ -119,6 +122,7 @@ def default(value: str, default_value: int = 0) -> int:
 
 
 def getchar(prompt: str = "") -> str:
+    """Get char"""
     print(prompt, end="", flush=True)
     g = getche()  # type: ignore
     print()
@@ -126,6 +130,7 @@ def getchar(prompt: str = "") -> str:
 
 
 def log(content: str, level: str):
+    """log file"""
     if not os.path.isdir("logs/"):
         os.mkdir("logs/")
     with open(f"logs/{datetime.datetime.today()}.log", "a+", encoding="utf-8") as file:
@@ -144,11 +149,13 @@ def is_volume_on():
 
 
 def get_size() -> tuple[int, int]:
+    """get size of terminal"""
     obj: Any = shutil.get_terminal_size()
     return obj.columns, obj.lines
 
 
 def conflict(data: str) -> str:  # mvp
+    """return conflict"""
     if data == "do-filling":
         return "no-filling"
     if data == "no-filling":
@@ -157,24 +164,28 @@ def conflict(data: str) -> str:  # mvp
 
 
 def safe_int(data: str) -> int:
-    if data.isdigit():
+    """int data safely"""
+    try:
         return int(data)
-    return 0
+    except:
+        return 0
 
 
 def confirm_input(prompt: str, no_strip: bool = False) -> str:
+    """Return the confirmed input"""
     result: str
     ans: str
     while result := input(prompt):
         if (ans := input("Are you sure?").strip()) in trues:
             break
         if ans == MAGIC_STRINGS["exit"]:
-            print("Action Cancled")
+            print("Action Canceled")
             return ""
     return result if no_strip else result.strip()
 
 
 def get_clr(file: str) -> str:
+    """get the color of the suitable"""
     path: pathlib.Path = pathlib.Path(file)
     if os.access(path, os.X_OK):
         return BOLD + GREEN
