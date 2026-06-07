@@ -1045,7 +1045,7 @@ def look_up(flags: list[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
         return result
-    if not os.path.isfile(args[1]) and ("-w" in flags or "--word" in flags):
+    if not os.path.isfile(args[1]) or ("-w" in flags or "--word" in flags):
         for word in args[1:]:
             defs = fetch(DEFAULT_URL + word)[0]["meanings"]
             if len(defs) == 0:
