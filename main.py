@@ -596,7 +596,7 @@ def confirm_input(prompt: str, no_strip: bool = False) -> str:
 
 # main function
 def unknown(flags: set[str], *args: str) -> return_value:
-    print("Unknown command:", args[0])
+    print(f"{RED}{BOLD}Unknown command:", args[0], RESET)
     return return_value(try_again=False, exit=False)
 
 
@@ -608,7 +608,7 @@ def study(flags: set[str], *args: str) -> return_value:
         if os.path.isfile(i):
             files.append(i)
         else:
-            print(f"{RED}Error: File {i} does not exist, skipping{RESET}")
+            print(f"{RED}{BOLD}Error: File {i} does not exist, skipping{RESET}")
     titles: list[str] = []
     have_title: bool = False
     if "--dtbs" in flags:
@@ -629,7 +629,7 @@ def study(flags: set[str], *args: str) -> return_value:
         for name, _rule in rule_temp.items():
             rule.update({name: set(_rule).union(rule.get(name, set()))})
         if not title:
-            print(f"{RED}Error: File {i} is not valid, skipping{RESET}")
+            print(f"{RED}{BOLD}Error: File {i} is not valid, skipping{RESET}")
             continue
         if not have_title:
             titles.append(title)
@@ -637,7 +637,7 @@ def study(flags: set[str], *args: str) -> return_value:
             for n in dic[0]:
                 questions.update({n: dic[1]})
     if not questions:
-        print(f"{RED}Error: No valid file found, exiting{RESET}")
+        print(f"{RED}{BOLD}Error: No valid file found, exiting{RESET}")
         return result
     question_list: list[str] = list(questions.keys())
     random.shuffle(question_list)
@@ -649,7 +649,7 @@ def study(flags: set[str], *args: str) -> return_value:
     rule["mode"] = set(rule["mode"])
     if len(rule["mode"]) > 1:
         print(
-            f"{RED}Error occurred when trying to study with {{{", ".join(args)}}}, found multiple mode. You may only study in one mode at a time.{RESET}"
+            f"{RED}{BOLD}Error occurred when trying to study with {{{", ".join(args)}}}, found multiple mode. You may only study in one mode at a time.{RESET}"
         )
         return result
     MODE: str = rule["mode"].pop()[0] if rule["mode"] else ""
@@ -794,7 +794,7 @@ def study(flags: set[str], *args: str) -> return_value:
         status_list.add((i, "~".join(sets), ori_trying - trying))
     time_consumed += time_module.time() - time_start_stamp
     clear()
-    print(f"{BLUE}Study stat: ")
+    print(f"{BOLD}{BLUE}Study stat: ")
     print(f"  Time consumed: {time_consumed:.2f}")
     print(f"  {GREEN}Average time per question: {time_consumed/done_question:.2f}")
     print(
@@ -845,7 +845,7 @@ def cd(flags: set[str], *args: str) -> return_value:
         prompt = f"{BOLD}{GREEN}{username}{RESET}{BOLD}:{BLUE}{working_dir}{YELLOW} $ {RESET}"
         return result
     if not os.path.isdir(args[1]):
-        print(f"{args[1]} is not a directory")
+        print(f"{BOLD}{RED}{args[1]} is not a directory{RESET}")
         return result
     os.chdir(args[1])
     working_dir = shrinkuser(os.getcwd())
@@ -858,10 +858,10 @@ def cd(flags: set[str], *args: str) -> return_value:
 def vim(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
-        print("No path provided")
+        print(f"{RED}{BOLD}No path provided{RESET}")
         return result
     if os.path.isdir(args[1]):
-        print(f"{args[1]} is a directory")
+        print(f"{RED}{BOLD}{args[1]} is a directory{RESET}")
         return result
     subprocess.call(["nvim", args[1], *flags])
     return result
@@ -870,7 +870,7 @@ def vim(flags: set[str], *args: str) -> return_value:
 def set_alias(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 3:
-        print("Not enough arguments provided")
+        print(f"{RED}{BOLD}Not enough arguments provided{RESET}")
         return result
     alias[args[1]] = args[2]
     return result
@@ -879,7 +879,7 @@ def set_alias(flags: set[str], *args: str) -> return_value:
 def mkdir(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
-        print("No path provided")
+        print(f"{RED}{BOLD}No path provided{RESET}")
         return result
     os.mkdir(args[1])
     return result
@@ -888,7 +888,7 @@ def mkdir(flags: set[str], *args: str) -> return_value:
 def cp(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 3:
-        print("Not enough arguments provided")
+        print(f"{RED}{BOLD}Not enough arguments provided{RESET}")
         return result
     shutil.copy(args[1], args[2])
     return result
@@ -897,12 +897,12 @@ def cp(flags: set[str], *args: str) -> return_value:
 def mv(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 3:
-        print("Not enough arguments provided")
+        print(f"{RED}{BOLD}Not enough arguments provided{RESET}")
         return result
     f_path: str = args[-1]
     IS_DIR: bool = os.path.isdir(f_path)
     if not IS_DIR and len(args) > 3:
-        print("Moving files to mono file is not allowed")
+        print(f"{RED}{BOLD}Moving files to mono file is not allowed{RESET}")
     for path in args[1:-1]:
         t_f_path = f_path
         if os.path.exists(t_f_path):
@@ -921,7 +921,7 @@ def _help(flags: set[str], *args: str) -> return_value:
         if args[1] in commands:
             print(f"{args[1]}: {commands[args[1]].__doc__}")
         else:
-            print("No such command")
+            print(f"{RED}{BOLD}No such command{RESET}")
         return result
     print("Available commands:")
     for i in commands:
@@ -939,7 +939,7 @@ def _clear(flags: set[str], *args: str) -> return_value:
 def _exec(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
-        print("No command provided")
+        print(f"{RED}{BOLD}No command provided{RESET}")
         return result
     print(eval(" ".join(args[1:])))
     return result
@@ -948,7 +948,7 @@ def _exec(flags: set[str], *args: str) -> return_value:
 def _set(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 3:
-        print("Not enough arguments provided")
+        print(f"{RED}{BOLD}Not enough arguments provided{RESET}")
         return result
     if args[1] not in DEFAULTS:
         GLOBALS[args[1]] = safe_int(args[2])
@@ -959,13 +959,16 @@ def _set(flags: set[str], *args: str) -> return_value:
 
 def ls(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
-    for [_, dirs, files] in os.walk(os.getcwd()):
+    hide: bool = "-a" not in flags
+    for [_, dirs, files] in os.walk(args[1] if len(args) > 1 else os.getcwd()):
+        print(BLUE + BOLD, end="")
         for dir in dirs:
-            if dir.startswith("."):
+            if dir.startswith(".") and hide:
                 continue
             print(dir + "/")
+        print(RESET, end="")
         for file in files:
-            if file.startswith("."):
+            if file.startswith(".") and hide:
                 continue
             print(file)
         dirs.clear()
@@ -975,14 +978,14 @@ def ls(flags: set[str], *args: str) -> return_value:
 def cat(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
-        print("No path provided")
+        print(f"{RED}{BOLD}No path provided{RESET}")
         return result
     for path in args[1:]:
         if os.path.isdir(path):
-            print(f"{path} is a directory")
+            print(f"{RED}{BOLD}{path} is a directory{RESET}")
             return result
         if not os.path.isfile(path):
-            print(f"{path} does not exist")
+            print(f"{RED}{BOLD}{path} does not exist{RESET}")
             return result
         with open(path, "r", encoding="utf-8") as file:
             if "--no-flag" not in flags:
@@ -1014,7 +1017,7 @@ def restart(flags: set[str], *args: str) -> return_value:
 def rm(flags: set[str], *args: str) -> return_value:
     result = return_value(try_again=False, exit=False)
     if len(args) < 2:
-        print("No path provided")
+        print(f"{RED}{BOLD}No path provided{RESET}")
         return result
     for path in args[1:]:
         if os.path.isdir(path):
@@ -1027,10 +1030,10 @@ def rm(flags: set[str], *args: str) -> return_value:
                 if answer.lower() in trues:
                     shutil.rmtree(path)
             else:
-                print(f'"{path}" is a directory')
+                print(f'{RED}{BOLD}"{path}" is a directory{RESET}')
             return result
         if not os.path.isfile(path):
-            print(f'"{path}" does not exist')
+            print(f'{RED}{BOLD}"{path}" does not exist{RESET}')
             return result
         answer = (
             input(f'Are you sure you want to delete file "{path}"? (y/n) ')
@@ -1053,7 +1056,7 @@ def look_up(flags: set[str], *args: str) -> return_value:
         for word in args[1:]:
             defs = fetch(DEFAULT_URL + word)[0]["meanings"]
             if len(defs) == 0:
-                print(f'word "{word}" not found')
+                print(f'{ORANGE}{BOLD}word "{word}" not found{RESET}')
             for i, entry in enumerate(defs):
                 print(
                     f"{i+1}. ({entry["partOfSpeech"]}) {entry["definitions"][0]["definition"]}"
@@ -1062,7 +1065,7 @@ def look_up(flags: set[str], *args: str) -> return_value:
     res: dict[str, str] = {}
     if not os.path.isfile(args[1]):
         print(
-            f'{RED}Error occurred when trying to read file "{args[1]}", not found.{RESET}'
+            f'{RED}{BOLD}Error occurred when trying to read file "{args[1]}", not found.{RESET}'
         )
         return result
     title: str = ""
@@ -1070,7 +1073,7 @@ def look_up(flags: set[str], *args: str) -> return_value:
         _: list[str] = file.readlines()
         if len(_) < 2:
             print(
-                f'{RED}Error occurred when trying to read a empty file "{args[1]}"{RESET}'
+                f'{RED}{BOLD}Error occurred when trying to read a empty file "{args[1]}"{RESET}'
             )
             return result
         title = _[0].strip()
@@ -1142,14 +1145,21 @@ def look_up(flags: set[str], *args: str) -> return_value:
                 break
             if len(defs):
                 res[_word or word] = defs[ins]["definitions"][0]["definition"]
-    if os.path.isfile(args[1] + ".dtb") and not ("-f" in flags or "--force" in flags):
+    if os.path.isfile(args[1] + ".dtb"):
+        if "-f" in flags or "--force" in flags:
+            with open(args[1] + ".dtb", "w", encoding="utf-8") as file:
+                pass
+        else:
+            print(
+                f'{RED}{BOLD}Error occurred when trying to write to file "{args[1]}.dtb", please use -f or --force to force overwrite, or '
+                f"change the name of the existed file{RESET}"
+            )
+            return result
+    if os.path.isdir(args[1] + ".dtb"):
         print(
-            f'{RED}Error occurred when trying to write to file "{args[1]}.dtb", please use -f or --force to force overwrite, or '
-            f"change the name of the existed file{RESET}"
+            f'{RED}{BOLD}Error occurred when trying to write to directory "{args[1]}.dtb"'
         )
-    if "-f" in flags or "--force" in flags:
-        with open(args[1] + ".dtb", "w", encoding="utf-8") as file:
-            pass
+        return result
     with open(args[1] + ".dtb", "a", encoding="utf-8") as file:
         if input(f"Use original title ({title})?") in trues:
             file.write(title + "\n")
@@ -1171,8 +1181,9 @@ def meta(flags: set[str], *args: str) -> return_value:
     result: return_value = return_value(exit=False, try_again=False)
     if not os.path.isfile(args[1]):
         print(
-            f"{RED}Error occurred when trying to open file {args[1]}, not found.{RESET}"
+            f"{RED}{BOLD}Error occurred when trying to open file {args[1]}, not found.{RESET}"
         )
+        return result
     if "-c" in flags or "--check" in flags:
         checker: meta_data_parser = meta_data_parser()
         r: list[str] = []
@@ -1203,6 +1214,9 @@ def meta(flags: set[str], *args: str) -> return_value:
 def merge(flags: set[str], *args: str) -> return_value:
     """merge multiple study dtbs"""
     result: return_value = return_value(exit=False, try_again=False)
+    if len(args) < 2:
+        print(f"{RED}{BOLD}Error: No enough arguments provided{RESET}")
+        return result
     it: Iterator[str] = None  # type: ignore
     for file_name in args[1:]:
         if not os.path.isfile(file_name):
@@ -1230,6 +1244,9 @@ def merge(flags: set[str], *args: str) -> return_value:
 
 def info(flags: set[str], *args: str) -> return_value:
     result: return_value = return_value(exit=False, try_again=False)
+    if len(args) < 2:
+        print(f"{RED}{BOLD}Error: No enough arguments provided{RESET}")
+        return result
     for file in args[1:]:
         if not os.path.isfile(file):
             continue
@@ -1273,6 +1290,9 @@ def runner(line: str) -> bool:
 
 def bash(_: set[str], *args: str) -> return_value:
     result: return_value = return_value(exit=False, try_again=False)
+    if len(args) < 2:
+        print(f"{RED}{BOLD}Error: No enough arguments provided{RESET}")
+        return result
     for file in args[1:]:
         if os.path.isfile(file):
             with open(file, encoding="utf-8") as f:
@@ -1281,7 +1301,6 @@ def bash(_: set[str], *args: str) -> return_value:
                         if not runner(line):
                             break
                     except KeyboardInterrupt:
-                        print()
                         continue
     return result
 
@@ -1290,25 +1309,34 @@ def unalias(_: set[str], *args: str) -> return_value:
     global alias
     result: return_value = return_value(try_again=False, exit=False)
     if len(args) == 1:
-        alias.clear()
+        if input("Are you sure you're gonna to remove all the alias?") in trues:
+            alias.clear()
         return result
     for alia in args[1:]:
         if alia in alias:
             alias.pop(alia)
         else:
-            print(f'Error occurred when trying to remove alias "{alia}", not found.')
+            print(
+                f'{RED}{BOLD}Error occurred when trying to remove alias "{alia}", not found.{RESET}'
+            )
             return result
     return result
 
 
 def grep(_: set[str], *args: str) -> return_value:
     result: return_value = return_value(try_again=False, exit=False)
+    if len(args) < 2:
+        print(f"{RED}{BOLD}Error: No enough arguments provided{RESET}")
+        return result
     subprocess.call(["grep", *args[1:]])
     return result
 
 
 def touch(_: set[str], *args: str) -> return_value:
     result: return_value = return_value(try_again=False, exit=False)
+    if len(args) < 2:
+        print(f"{RED}{BOLD}Error: No enough arguments provided{RESET}")
+        return result
     for path in args[1:]:
         pathlib.Path(path).touch()
     return result
@@ -1346,15 +1374,17 @@ alias: dict[str, str] = {}
 GLOBALS: dict[str, int] = {"chances": 10, "max_time": 300}
 DEFAULTS: dict[str, int] = {"chances": 10, "max_time": 300}
 username: str = os.getenv("USER", "student")
-BOLD = "\033[1m"
-RESET = "\033[0m"
-GREEN = "\033[32m"
-YELLOW = "\033[33m"
-BLUE = "\033[34m"
-RED = "\033[31m"
-PURPLE = "\033[35m"
+BOLD: str = "\033[1m"
+RESET: str = "\033[0m"
+GREEN: str = "\033[32m"
+YELLOW: str = "\033[33m"
+BLUE: str = "\033[34m"
+RED: str = "\033[31m"
+PURPLE: str = "\033[35m"
+ORANGE: str = "\033[38;5;208m"
 working_dir: str = shrinkuser(os.getcwd())
-prompt = f"{BOLD}{GREEN}{username}{RESET}{BOLD}:{BLUE}{working_dir}{YELLOW} $ {RESET}"
+SYS_NAME: str = "studyish"
+prompt = f"{BOLD}{GREEN}{username}@{SYS_NAME}{RESET}{BOLD}:{BLUE}{working_dir}{YELLOW} $ {RESET}"
 
 TTS_ENGINE: pyttsx3.Engine = pyttsx3.init()  # type: ignore
 TTS_ENGINE.setProperty("rate", 150)  # type: ignore
