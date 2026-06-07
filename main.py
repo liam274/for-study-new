@@ -743,6 +743,7 @@ def study(flags: list[str], *args: str) -> return_value:
                 )
                 break_through = True
                 timeout_interrupt += 1
+                getche()
                 break
             if end > TIME_LIMIT:
                 print("Time's up!")
@@ -772,6 +773,7 @@ def study(flags: list[str], *args: str) -> return_value:
                     "Are you doing on something else? Go either play, or "
                     f"study! Don't PRETEND to study. You've used too much time ({end:.2f} sec)"
                 )
+                getche()
                 timeout_interrupt += 1
                 break
             if end > TIME_LIMIT:
