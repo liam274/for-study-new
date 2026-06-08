@@ -290,16 +290,14 @@ def cd(flags: set[str], *args: str) -> return_value:
     if len(args) < 2:
         working_dir = "~"
         os.chdir(os.path.expanduser("~"))
-        prompt = f"{BOLD}{GREEN}{username}{RESET}{BOLD}:{BLUE}{working_dir}{YELLOW} $ {RESET}"
+        prompt = f"{BOLD}{GREEN}{username}@{SYS_NAME}{RESET}{BOLD}:{BLUE}{working_dir}{YELLOW} $ {RESET}"
         return result
     if not os.path.isdir(args[1]):
         print(f"{BOLD}{RED}{args[1]} is not a directory{RESET}")
         return result
     os.chdir(args[1])
     working_dir = shrinkuser(os.getcwd())
-    prompt = (
-        f"{BOLD}{GREEN}{username}{RESET}{BOLD}:{BLUE}{working_dir}{YELLOW} $ {RESET}"
-    )
+    prompt = f"{BOLD}{GREEN}{username}@{SYS_NAME}{RESET}{BOLD}:{BLUE}{working_dir}{YELLOW} $ {RESET}"
     return result
 
 
