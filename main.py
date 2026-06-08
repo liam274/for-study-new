@@ -50,13 +50,17 @@ def study(flags: set[str], *args: str) -> return_value:
         if os.path.isfile(i):
             files.append(i)
         else:
-            print(f"{RED}{BOLD}Error: File {i} does not exist, skipping{RESET}")
+            print(f'{RED}{BOLD}Error: File "{i}" does not exist, skipping{RESET}')
     titles: list[str] = []
     have_title: bool = False
     if "--dtbs" in flags:
         have_title = True
         f: list[str] = []
         for file in files:
+            if not os.path.isfile(file):
+                print(
+                    f'{RED}{BOLD}Error: File "{file}" does not exist, skipping{RESET}'
+                )
             with open(file, encoding="utf-8") as FI:
                 d: list[str] = FI.readlines()
                 f += [i.strip() for i in d[1:]]
@@ -71,7 +75,7 @@ def study(flags: set[str], *args: str) -> return_value:
         for name, _rule in rule_temp.items():
             rule.update({name: set(_rule).union(rule.get(name, set()))})
         if not title:
-            print(f"{RED}{BOLD}Error: File {i} is not valid, skipping{RESET}")
+            print(f'{RED}{BOLD}Error: File "{i}" is not valid, skipping{RESET}')
             continue
         if not have_title:
             titles.append(title)
