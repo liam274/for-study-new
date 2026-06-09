@@ -128,7 +128,7 @@ def study(flags: set[str], *args: str) -> return_value:
         print(title)
         time += 1
         temp: answer = questions[i]
-        sets: set[str] = temp.content
+        sets: set[str] = {*temp.content}
         specific_rules: dict[str, set[tuple[str, ...]]] = {}
         for name, rl in rule.items():
             tempie: set[tuple[str, ...]] = {*rl}
