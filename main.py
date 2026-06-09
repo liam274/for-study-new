@@ -204,10 +204,10 @@ def study(flags: set[str], *args: str) -> return_value:
                 timeout_interrupt += 1
                 getchar("Press to continue >>")
                 break
-            time_consumed += end
             if end > TIME_LIMIT:
                 print("Time's up!")
                 break_through = True
+                time_consumed += end
                 break
         else:
             print("Correct!")
