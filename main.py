@@ -129,13 +129,6 @@ def study(flags: set[str], *args: str) -> return_value:
         temp: answer = questions[i]
         sets: set[str] = temp.content
         specific_rules: dict[str, set[tuple[str, ...]]] = {}
-        # for name, rl in rule.items():
-        #     tempie: set[tuple[str, ...]] = {*temp.rules.get(name, set())}
-        #     for r in rl:
-        #         for item in {*tempie}:
-        #             if conflict("^".join(r)) in item:
-        #                 tempie.remove(item)
-        #     specific_rules[name] = rl.union(tempie)
         for name, rl in rule.items():
             tempie: set[tuple[str, ...]] = {*rl}
             res: set[tuple[str, ...]] = temp.rules.get(name, set())
@@ -180,6 +173,7 @@ def study(flags: set[str], *args: str) -> return_value:
                 continue
             if MAGIC_STRINGS["skip"] in answer:
                 print("Skip magic string detected, skipping...")
+                time_consumed += time_module.time() - start
                 trying = 0
                 skip += 1
                 break
@@ -193,6 +187,7 @@ def study(flags: set[str], *args: str) -> return_value:
                         "You've ran out of chances! The correct answers are: ",
                         " and ".join(sets),
                     )
+                    time_consumed += time_module.time() - start
                     getchar("Press to continue >>")
                     break
             if (end := time_module.time() - start) > min(
@@ -217,6 +212,7 @@ def study(flags: set[str], *args: str) -> return_value:
         else:
             print("Correct!")
             end: float = time_module.time() - start
+            time_consumed += end
             if end > most_time:
                 most_question = i
                 most_time = end
