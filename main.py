@@ -92,7 +92,6 @@ def study(flags: set[str], *args: str) -> return_value:
     title: str = " & ".join(titles)
     total: int = len(question_list)
     history = InMemoryHistory()
-    rule["mode"] = set(rule["mode"])
     if len(rule["mode"]) > 1:
         print(
             f"{RED}{BOLD}Error occurred when trying to study with {{{", ".join(args)}}}, found multiple mode. You may only study in one mode at a time.{RESET}"
