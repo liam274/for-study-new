@@ -235,7 +235,7 @@ def study(flags: set[str], *args: str) -> return_value:
                 print("Time's up!")
                 break
             time_module.sleep(0.2)
-            status_list.add((i, "~".join(sets), ori_trying - trying))
+            status_list.add((i, "~".join(temp.content), ori_trying - trying))
             continue
         end: float = time_module.time() - start
         time_consumed += end
@@ -245,7 +245,7 @@ def study(flags: set[str], *args: str) -> return_value:
         if end > TIME_LIMIT:
             print("Time's up!")
             break
-        status_list.add((i, "~".join(sets), ori_trying - trying))
+        status_list.add((i, "~".join(temp.content), ori_trying - trying))
     clear()
     print(f"{BOLD}{BLUE}Study stat: ")
     print(f"  Time consumed: {time_consumed:.2f}")
