@@ -10,7 +10,6 @@ from prompt_toolkit.document import Document
 from typing import Iterator, Callable, Any
 import datetime
 import pulsectl  # type: ignore
-import sys
 import requests
 import os
 import subprocess
@@ -101,7 +100,7 @@ def fetch(url: str, timeout: int = 10) -> list[Any]:
     except Exception as e:
         print("Ouch! The console cannot reach the server...")
         log(f'Fetch for url "{url}" failed: {e}', "ERROR")
-        sys.exit(-1)
+        return []
     return resp.json()
 
 

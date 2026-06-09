@@ -61,6 +61,7 @@ def study(flags: set[str], *args: str) -> return_value:
                 print(
                     f'{RED}{BOLD}Error: File "{file}" does not exist, skipping{RESET}'
                 )
+                continue
             with open(file, encoding="utf-8") as FI:
                 d: list[str] = FI.readlines()
                 f += [i.strip() for i in d[1:]]
