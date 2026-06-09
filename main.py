@@ -131,8 +131,8 @@ def study(flags: set[str], *args: str) -> return_value:
         temp: answer = questions[i]
         sets: set[str] = temp.content
         specific_rules: dict[str, set[tuple[str, ...]]] = {}
-        for name, rl in temp.rules.items():
-            tempie: set[tuple[str, ...]] = {*rule.get(name, set())}
+        for name, rl in rule.items():
+            tempie: set[tuple[str, ...]] = {*temp.rules.get(name, set())}
             for r in rl:
                 for item in {*tempie}:
                     if conflict("^".join(r)) in item:
