@@ -110,7 +110,6 @@ def study(flags: set[str], *args: str) -> return_value:
     DO_WRONG: bool = "--do-wrong" in flags
     chances: int = GLOBALS["chances"]
     time_consumed: float = 0
-    begin: float = time_module.time()
     done_question: int = 0
     most_question: str = ""
     most_time: float = 0
@@ -193,6 +192,7 @@ def study(flags: set[str], *args: str) -> return_value:
                 or GLOBALS["max_time"],
                 3600,
             ):
+                time_consumed += end
                 print(
                     "Are you doing on something else? Go either play, or "
                     f"study! Don't PRETEND to study. You've used too much time ({end:.2f} sec)"
@@ -201,6 +201,7 @@ def study(flags: set[str], *args: str) -> return_value:
                 timeout_interrupt += 1
                 getchar("Press to continue >>")
                 break
+            time_consumed += end
             if end > TIME_LIMIT:
                 print("Time's up!")
                 break_through = True
@@ -232,6 +233,7 @@ def study(flags: set[str], *args: str) -> return_value:
             status_list.add((i, "~".join(sets), ori_trying - trying))
             continue
         end: float = time_module.time() - start
+        time_consumed += end
         if end > most_time:
             most_question = i
             most_time = end
@@ -239,7 +241,6 @@ def study(flags: set[str], *args: str) -> return_value:
             print("Time's up!")
             break
         status_list.add((i, "~".join(sets), ori_trying - trying))
-    time_consumed += time_module.time() - begin
     clear()
     print(f"{BOLD}{BLUE}Study stat: ")
     print(f"  Time consumed: {time_consumed:.2f}")
