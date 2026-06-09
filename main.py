@@ -137,7 +137,7 @@ def study(flags: set[str], *args: str) -> return_value:
                     if conflict("^".join(r)) in item:
                         tempie.remove(item)
             specific_rules[name] = res.union(tempie)
-        if ("ignore",) in specific_rules.get("set", set(tuple())):
+        if ("ignore",) in specific_rules.get("set", set()):
             continue
         done_question += 1
         if MODE == "tts":
