@@ -129,13 +129,21 @@ def study(flags: set[str], *args: str) -> return_value:
         temp: answer = questions[i]
         sets: set[str] = temp.content
         specific_rules: dict[str, set[tuple[str, ...]]] = {}
+        # for name, rl in rule.items():
+        #     tempie: set[tuple[str, ...]] = {*temp.rules.get(name, set())}
+        #     for r in rl:
+        #         for item in {*tempie}:
+        #             if conflict("^".join(r)) in item:
+        #                 tempie.remove(item)
+        #     specific_rules[name] = rl.union(tempie)
         for name, rl in rule.items():
-            tempie: set[tuple[str, ...]] = {*temp.rules.get(name, set())}
-            for r in rl:
+            tempie: set[tuple[str, ...]] = {*rl}
+            res: set[tuple[str, ...]] = temp.rules.get(name, set())
+            for r in res:
                 for item in {*tempie}:
                     if conflict("^".join(r)) in item:
                         tempie.remove(item)
-            specific_rules[name] = rl.union(tempie)
+            specific_rules[name] = res.union(tempie)
         if ("ignore",) in specific_rules.get("set", set(tuple())):
             continue
         done_question += 1
