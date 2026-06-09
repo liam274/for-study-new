@@ -255,7 +255,7 @@ def study(flags: set[str], *args: str) -> return_value:
     )
     if MODE == "timed":
         timeout_interrupt += len(question_list) - t
-    print(f"  {PURPLE}Timeout interrupted questions: {timeout_interrupt:.2f}")
+    print(f"  {PURPLE}Timeout interrupted questions: {timeout_interrupt}")
     print(f"  {RED}Skipped questions: {skip}")
     wrong_list: set[tuple[str, str, int]] = set()
     print(f"  Wrong Question: {RESET}")
