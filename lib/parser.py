@@ -312,15 +312,15 @@ class parser:
             t: int = -1
             for char in i:
                 t += 1
+                if skip:
+                    temp.append(char)
+                    skip = False
+                    continue
                 if in_formula:
                     form += char
                     if char == ">":
                         in_formula = False
                         special = form
-                    continue
-                if skip:
-                    temp.append(char)
-                    skip = False
                     continue
                 if char == "\\":
                     skip = True
