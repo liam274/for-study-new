@@ -161,7 +161,7 @@ def study(flags: set[str], *args: str) -> return_value:
         start: float = time_module.time()
         while sets:
             user_input: set[str] = set(
-                i.strip() for i in input(qer, history=history).split("+")
+                i.strip() for i in input(qer, history=history).split(" +")
             )
             if not any(user_input):
                 continue

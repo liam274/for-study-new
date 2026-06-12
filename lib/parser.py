@@ -296,12 +296,14 @@ class parser:
                 is_meta = True
                 continue
             data.append(i)
-        for i in meta_data.run_rule("\n".join(data)).split("\n"):
-            if i[0] == "@":
-                _: list[str] = i.split(" ")
-                rule[_[0].lstrip("@")] = {*(tuple(i.split("^")) for i in _[1:])}.union(
-                    rule.get(_[0].lstrip("@"), set())
-                )
+        for line in meta_data.run_rule("\n".join(data)).split("\n"):
+            if line[0] == "@":
+                _: list[str] = line.split(" ")
+                rule[_[0].lstrip("@")] = {
+                    *(tuple(it.split("^")) for it in _[1:])
+                }.union(rule.get(_[0].lstrip("@"), set()))
+                continue
+            if ("ignore",) in rule.get("set", set()):
                 continue
             all: list[str] = []
             temp: list[str] = []
@@ -310,7 +312,7 @@ class parser:
             in_formula: bool = False
             form: str = ""
             t: int = -1
-            for char in i:
+            for char in line:
                 t += 1
                 if skip:
                     temp.append(char)
@@ -325,7 +327,7 @@ class parser:
                 if char == "\\":
                     skip = True
                     continue
-                if char == "-" and len(i) > t + 1 and i[t + 1] in "(>":
+                if char == "-" and len(line) > t + 1 and line[t + 1] in "(>":
                     in_formula = True
                     form = "-"
                     all.append("".join(temp))
@@ -341,8 +343,7 @@ class parser:
                 all.append("".join(temp))
             if special:
                 all[0:0] = [special]
-            if ("ignore",) not in rule.get("set", set()):
-                result.append((tuple(i for i in all), rule))
+            result.append((tuple(i for i in all), rule))
             rule.clear()
         return tuple(result), meta_data.data
 
@@ -365,7 +366,7 @@ def parse(
             result.append(
                 ({*line[2:]}, answer(first=False, content={line[1]}, rules=rl))
             )
-        elif special_char.startswith("-("):
+        elif special_char.startswith("-"):
             result.append(
                 (
                     {line[1] + special_char},
