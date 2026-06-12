@@ -163,7 +163,6 @@ def study(flags: set[str], *args: str) -> return_value:
             user_input: set[str] = set(
                 i.strip() for i in input(qer, history=history).split(" +")
             )
-            print(sets)
             if not any(user_input):
                 continue
             if MAGIC_STRINGS["exit"] in user_input:
