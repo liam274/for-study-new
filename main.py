@@ -160,29 +160,30 @@ def study(flags: set[str], *args: str) -> return_value:
         ori_trying: int = trying
         start: float = time_module.time()
         while sets:
-            answer = set(i.strip() for i in input(qer, history=history).split("+"))
-            if not any(answer):
+            user_input: set[str] = set(
+                i.strip() for i in input(qer, history=history).split("+")
+            )
+            if not any(user_input):
                 continue
-            if MAGIC_STRINGS["exit"] in answer:
+            if MAGIC_STRINGS["exit"] in user_input:
                 print("Escape magic string detected, exiting...")
                 return result
-            if MAGIC_STRINGS["pause"] in answer:
+            if MAGIC_STRINGS["pause"] in user_input:
                 print("Pause magic string detected, paused...")
                 time_consumed += time_module.time() - start
                 input("Press enter to resume>> ")
                 start = time_module.time()
                 continue
-            if MAGIC_STRINGS["skip"] in answer:
+            if MAGIC_STRINGS["skip"] in user_input:
                 print("Skip magic string detected, skipping...")
                 time_consumed += time_module.time() - start
                 trying = 0
                 skip += 1
                 break
-            if sets - answer != sets and not (answer - sets):
-                sets -= answer
+            if sets >= user_input:
+                sets -= user_input
             else:
                 trying -= 1
-                print("You're wrong! Please try again.")
                 if trying == 0:
                     print(
                         "You've ran out of chances! The correct answers are: ",
@@ -191,6 +192,7 @@ def study(flags: set[str], *args: str) -> return_value:
                     time_consumed += time_module.time() - start
                     getchar("Press to continue >>")
                     break
+                print("You're wrong! Please try again.")
             if (end := time_module.time() - start) > min(
                 safe_int(specific_rules.get("max_time", set(("0",))).pop()[0])
                 or GLOBALS["max_time"],
