@@ -207,14 +207,13 @@ def split(data: str, separator: str) -> list[str]:
         if skip:
             temp.append(char)
             skip = False
-            continue
-        if char == "\\":
+        elif char == "\\":
             skip = True
-            continue
-        if char in separator:
+        elif char in separator:
             result.append("".join(temp))
             temp.clear()
-        temp.append(char)
+        else:
+            temp.append(char)
     if temp:
         result.append("".join(temp))
     return result
