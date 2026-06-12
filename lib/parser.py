@@ -369,7 +369,7 @@ def parse(
         elif special_char.startswith("-"):
             result.append(
                 (
-                    {line[1] + special_char},
+                    {line[1].replace("\\+", "+") + special_char},
                     answer(
                         first=True,
                         content=set(i.strip() for i in split(line[2], "+")),
@@ -379,7 +379,7 @@ def parse(
             )
             result.append(
                 (
-                    {special_char + line[2]},
+                    {special_char + line[2].replace("\\+", "+")},
                     answer(
                         first=False,
                         content=set(i.strip() for i in split(line[1], "+")),
