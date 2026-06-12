@@ -372,7 +372,7 @@ def parse(
                     {line[1] + special_char},
                     answer(
                         first=True,
-                        content=set(i.strip() for i in line[2].split("+")),
+                        content=set(i.strip() for i in split(line[2], "+")),
                         rules=rl,
                     ),
                 )
@@ -382,7 +382,7 @@ def parse(
                     {special_char + line[2]},
                     answer(
                         first=False,
-                        content=set(i.strip() for i in line[1].split("+")),
+                        content=set(i.strip() for i in split(line[1], "+")),
                         rules=rl,
                     ),
                 )

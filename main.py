@@ -128,7 +128,7 @@ def study(flags: set[str], *args: str) -> return_value:
         print(title)
         time += 1
         temp: answer = questions[i]
-        sets: set[str] = {*temp.content}
+        sets: set[str] = {*(i for i in temp.content if i)}
         specific_rules: dict[str, set[tuple[str, ...]]] = {}
         for name, rl in rule.items():
             tempie: set[tuple[str, ...]] = {*rl}
@@ -163,6 +163,7 @@ def study(flags: set[str], *args: str) -> return_value:
             user_input: set[str] = set(
                 i.strip() for i in input(qer, history=history).split(" +")
             )
+            print(sets)
             if not any(user_input):
                 continue
             if MAGIC_STRINGS["exit"] in user_input:

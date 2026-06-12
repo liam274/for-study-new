@@ -197,3 +197,24 @@ def safe_float(data: str) -> float:
         return float(data)
     except:
         return 0
+
+
+def split(data: str, separator: str) -> list[str]:
+    result: list[str] = []
+    temp: list[str] = []
+    skip: bool = False
+    for char in data:
+        if skip:
+            temp.append(char)
+            skip = False
+            continue
+        if char == "\\":
+            skip = True
+            continue
+        if char in separator:
+            result.append("".join(temp))
+            temp.clear()
+        temp.append(char)
+    if temp:
+        result.append("".join(temp))
+    return result
