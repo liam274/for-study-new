@@ -121,13 +121,13 @@ def study(flags: set[str], *args: str) -> return_value:
     for t, i in enumerate(question_list):
         if break_through:
             break
-        i = i.strip()
         if DO_WRONG and i not in flags:
             continue
         clear()
         print(title)
         time += 1
         temp: answer = questions[i]
+        i = i.strip()
         sets: set[str] = {*(i for i in temp.content if i)}
         specific_rules: dict[str, set[tuple[str, ...]]] = {}
         for name, rl in rule.items():
