@@ -299,7 +299,7 @@ class parser:
                 is_meta = True
                 continue
             data.append(i)
-        if !ever_executed:
+        if not ever_executed:
             print(f"{RED}Error: unexpected no any content in the file \"{path}\"{RESET}");
         for line in meta_data.run_rule("\n".join(data)).split("\n"):
             if line[0] == "@":
