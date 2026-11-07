@@ -270,6 +270,7 @@ class meta_data_parser:
 
 class parser:
     def __init__(self: parser, path: str):
+        self.path = path
         with open(path, "r", encoding="utf-8") as file:
             self.iter = (i.rstrip("\n") for i in file.readlines())
 
@@ -283,7 +284,9 @@ class parser:
         meta_data: meta_data_parser = meta_data_parser()
         data: list[str] = []
         rule: dict[str, set[tuple[str, ...]]] = {}
+        ever_executed: bool = False
         for i in self.iter:
+            ever_executed = True
             if is_meta:
                 if i == "[meta end]":
                     is_meta = False
@@ -296,6 +299,8 @@ class parser:
                 is_meta = True
                 continue
             data.append(i)
+        if !ever_executed:
+            print(f"{RED}Error: unexpected no any content in the file \"{path}\"{RESET}");
         for line in meta_data.run_rule("\n".join(data)).split("\n"):
             if line[0] == "@":
                 _: list[str] = line.split(" ")
