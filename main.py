@@ -169,10 +169,10 @@ def study(flags: set[str], *args: str) -> return_value:
             if not any(user_input):
                 continue
             if MAGIC_STRINGS["exit"] in user_input:
-                print("Escape magic string detected, exiting...")
+                print(f"{BLUE}Escape magic string detected, exiting...{RESET}")
                 return result
             if MAGIC_STRINGS["pause"] in user_input:
-                print("Pause magic string detected, paused...")
+                print(f"{YELLOW}Pause magic string detected, paused...{RESET}")
                 time_consumed += time_module.time() - start
                 input("Press enter to resume>> ")
                 start = time_module.time()
@@ -198,7 +198,7 @@ def study(flags: set[str], *args: str) -> return_value:
                     time_consumed += time_module.time() - start
                     getchar("Press to continue >>")
                     break
-                print("You're wrong! Please try again.")
+                print(f"{RED}You're wrong! Please try again.{RESET}")
             if (end := time_module.time() - start) > min(
                 safe_int(specific_rules.get("max_time", set(("0",))).pop()[0])
                 or GLOBALS["max_time"],
@@ -219,7 +219,7 @@ def study(flags: set[str], *args: str) -> return_value:
                 time_consumed += end
                 break
         else:
-            print("Correct!")
+            print(f"{GREEN}Correct!{RESET}")
             end: float = time_module.time() - start
             time_consumed += end
             if end > most_time:
