@@ -180,6 +180,9 @@ def study(flags: set[str], *args: str) -> return_value:
                 trying = 0
                 skip += 1
                 break
+            if "?" in user_input:
+                print(", ".join(sets))
+                continue
             if sets >= user_input:
                 sets -= user_input
             else:
