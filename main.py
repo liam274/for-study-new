@@ -82,6 +82,9 @@ def study(flags: set[str], *args: str) -> return_value:
             titles.append(title)
         for dic in _:
             for n in dic[0]:
+                if n in questions:
+                    print(f'{RED}{BOLD}Error: unexpected field "{n}" collide{RESET}')
+                    return result
                 questions.update({n: dic[1]})
     if not questions:
         print(f"{RED}{BOLD}Error: No valid file found, exiting{RESET}")

@@ -301,7 +301,7 @@ class parser:
             data.append(i)
         if not ever_executed:
             print(
-                f'{RED}Error: unexpected no any content in the file "{self.path}"{RESET}'
+                f'{RED}{BOLD}Error: unexpected no any content in the file "{self.path}"{RESET}'
             )
         for line in meta_data.run_rule("\n".join(data)).split("\n"):
             if line[0] == "@":
